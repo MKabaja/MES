@@ -6,3 +6,4 @@ vendor/
 AGENTS.md
 CLAUDE.md
 docs/
+.claude/
