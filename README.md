@@ -5,7 +5,7 @@ Time tracking on welding work orders and labour cost estimation.
 ## Structure
 
 - `backend/` — Laravel 13 + Sail + PostgreSQL
-- `frontend/` — React 19 + Vite
+- `frontend/` — React 19 + Vite (planned)
 
 ## Getting started
 
@@ -24,3 +24,12 @@ docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/app" -w /app \
 ```
 
 The API is available at http://localhost:8000 (health check: `/up`).
+
+## Verification
+
+```bash
+cd backend
+./vendor/bin/sail composer check
+```
+
+Runs Pint, Larastan and Pest.
