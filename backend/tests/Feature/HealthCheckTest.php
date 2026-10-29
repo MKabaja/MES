@@ -7,3 +7,9 @@ it('returns 200 from the health endpoint', function (): void {
 
     $response->assertOk();
 });
+
+it('returns 404 for the root path', function (): void {
+    $response = $this->get('/');
+
+    $response->assertNotFound();
+});
