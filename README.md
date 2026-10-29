@@ -9,4 +9,18 @@ Time tracking on welding work orders and labour cost estimation.
 
 ## Getting started
 
-Setup steps will be added together with the backend skeleton.
+### Backend
+
+Requires Docker only (no local PHP).
+
+```bash
+cd backend
+cp .env.example .env
+docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/app" -w /app \
+  composer:2.10 composer install --ignore-platform-req=ext-*
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate
+```
+
+The API is available at http://localhost:8000 (health check: `/up`).
