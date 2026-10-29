@@ -51,3 +51,15 @@ it('adds the security headers to a domain error response', function (): void {
 
     $response->assertConflict()->assertHeader('X-Content-Type-Options', 'nosniff');
 });
+
+it('adds the security headers to a response cut short by an earlier global middleware', function (): void {
+    Route::middleware('api')->post('api/v1/_test/upload', fn () => response()->json(['data' => []]));
+
+    $response = $this->call('POST', 'api/v1/_test/upload', server: [
+        'CONTENT_LENGTH' => 99999999999,
+        'HTTP_ACCEPT' => 'application/json',
+    ]);
+
+    $response->assertHeader('X-Content-Type-Options', 'nosniff');
+    expect($response->getStatusCode())->not->toBe(200);
+});

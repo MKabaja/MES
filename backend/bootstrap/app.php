@@ -10,6 +10,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\OriginMismatchException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,9 +29,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->append(SecurityHeaders::class);
+        $middleware->prepend(SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontReport(DomainException::class);
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
@@ -64,6 +67,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $cause = $exception->getPrevious();
 
             return match (true) {
+                $exception instanceof HttpResponseException => null,
                 $exception instanceof DomainException => $envelope(
                     $exception->errorCode,
                     $exception->getMessage(),

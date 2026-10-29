@@ -8,9 +8,11 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\Access\Response as AccessResponse;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\OriginMismatchException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Session\TokenMismatchException;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -90,26 +92,44 @@ it('puts the message under the field when a domain error names one', function ()
         ]);
 });
 
-it('renders framework exceptions in the envelope', function (Closure $makeException, int $status, string $code): void {
+it('renders framework exceptions in the envelope', function (Closure $makeException, int $status, string $code, string $message): void {
     throwFromTestRoute($makeException());
 
     $response = $this->getJson('api/v1/_test/throw');
 
     $response->assertStatus($status)
-        ->assertJsonPath('code', $code)
-        ->assertJsonStructure(['message', 'code']);
-    expect($response->json('message'))->toBeString()->not->toBeEmpty();
+        ->assertExactJson(['message' => $message, 'code' => $code]);
 })->with([
-    'authentication' => [fn () => new AuthenticationException, 401, 'UNAUTHENTICATED'],
-    'authorization' => [fn () => new AuthorizationException, 403, 'FORBIDDEN'],
-    'access denied' => [fn () => new AccessDeniedHttpException, 403, 'FORBIDDEN'],
-    'denied as not found' => [fn () => (new AuthorizationException)->withStatus(404), 404, 'NOT_FOUND'],
-    'model not found' => [fn () => new ModelNotFoundException, 404, 'NOT_FOUND'],
-    'route not found' => [fn () => new NotFoundHttpException, 404, 'NOT_FOUND'],
-    'origin mismatch' => [fn () => new OriginMismatchException, 403, 'FORBIDDEN'],
-    'csrf mismatch' => [fn () => new TokenMismatchException, 419, 'CSRF_MISMATCH'],
-    'throttled' => [fn () => new ThrottleRequestsException, 429, 'TOO_MANY_REQUESTS'],
+    'authentication' => [fn () => new AuthenticationException, 401, 'UNAUTHENTICATED', 'Brak aktywnej sesji. Zaloguj się.'],
+    'authorization' => [fn () => new AuthorizationException, 403, 'FORBIDDEN', 'Brak uprawnień do wykonania tej operacji.'],
+    'access denied' => [fn () => new AccessDeniedHttpException, 403, 'FORBIDDEN', 'Brak uprawnień do wykonania tej operacji.'],
+    'denied as not found' => [fn () => (new AuthorizationException)->withStatus(404), 404, 'NOT_FOUND', 'Nie znaleziono zasobu.'],
+    'model not found' => [fn () => new ModelNotFoundException, 404, 'NOT_FOUND', 'Nie znaleziono zasobu.'],
+    'route not found' => [fn () => new NotFoundHttpException, 404, 'NOT_FOUND', 'Nie znaleziono zasobu.'],
+    'origin mismatch' => [fn () => new OriginMismatchException, 403, 'FORBIDDEN', 'Brak uprawnień do wykonania tej operacji.'],
+    'csrf mismatch' => [fn () => new TokenMismatchException, 419, 'CSRF_MISMATCH', 'Sesja wygasła. Odśwież stronę i spróbuj ponownie.'],
+    'throttled' => [fn () => new ThrottleRequestsException, 429, 'TOO_MANY_REQUESTS', 'Zbyt wiele żądań. Spróbuj ponownie za chwilę.'],
 ]);
+
+it('does not report domain exceptions but reports unexpected ones', function (): void {
+    Exceptions::fake();
+    Route::middleware('api')->get('api/v1/_test/domain', fn () => throw new DomainException(ErrorCode::OrderLocked, 'Zlecenie zablokowane.'));
+    Route::middleware('api')->get('api/v1/_test/boom', fn () => throw new RuntimeException('boom'));
+
+    $this->getJson('api/v1/_test/domain');
+    $this->getJson('api/v1/_test/boom');
+
+    Exceptions::assertNotReported(DomainException::class);
+    Exceptions::assertReported(RuntimeException::class);
+});
+
+it('passes a prepared HttpResponseException response through untouched', function (): void {
+    throwFromTestRoute(new HttpResponseException(response()->json(['custom' => true], 418)));
+
+    $response = $this->getJson('api/v1/_test/throw');
+
+    $response->assertStatus(418)->assertExactJson(['custom' => true]);
+});
 
 it('renders validation failures with errors per field', function (): void {
     throwFromTestRoute(ValidationException::withMessages(['name' => ['Pole jest wymagane.']]));
