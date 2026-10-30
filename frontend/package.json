@@ -70,7 +70,6 @@
 		"caniuse-lite": "1.0.30001819",
 		"electron-to-chromium": "1.5.463",
 		"node-releases": "2.0.60",
-		"@babel/runtime": "8.0.7",
 		"tldts-core": "7.4.19",
 		"magic-string": "1.4.3",
 		"@csstools/css-syntax-patches-for-csstree": "1.1.15",
@@ -88,6 +87,7 @@
 		"unplugin": "3.4.0",
 		"seroval": "1.7.0",
 		"solid-js": "1.9.17",
-		"seroval-plugins": "1.7.0"
+		"seroval-plugins": "1.7.0",
+		"@babel/runtime": "7.29.10"
 	}
 }
