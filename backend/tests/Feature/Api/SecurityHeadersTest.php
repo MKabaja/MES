@@ -7,6 +7,7 @@ use App\Domain\Exceptions\DomainException;
 use Illuminate\Support\Facades\Route;
 
 it('adds the security headers to api responses', function (): void {
+    config(['mes.hsts.max_age' => 31536000, 'mes.hsts.include_subdomains' => false]);
     Route::middleware('api')->get('api/v1/_test/ok', fn () => response()->json(['data' => []]));
 
     $response = $this->getJson('api/v1/_test/ok');
@@ -16,7 +17,7 @@ it('adds the security headers to api responses', function (): void {
         ->assertHeader('X-Frame-Options', 'DENY')
         ->assertHeader('Referrer-Policy', 'no-referrer')
         ->assertHeader('Permissions-Policy', 'camera=(), microphone=()')
-        ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        ->assertHeader('Strict-Transport-Security', 'max-age=31536000');
 });
 
 it('adds the security headers to error responses', function (): void {
@@ -60,6 +61,25 @@ it('adds the security headers to a response cut short by an earlier global middl
         'HTTP_ACCEPT' => 'application/json',
     ]);
 
-    $response->assertHeader('X-Content-Type-Options', 'nosniff');
-    expect($response->getStatusCode())->not->toBe(200);
+    $response->assertStatus(413)
+        ->assertHeader('X-Content-Type-Options', 'nosniff')
+        ->assertExactJson(['message' => 'Żądanie jest zbyt duże.', 'code' => 'PAYLOAD_TOO_LARGE']);
+});
+
+it('adds includeSubDomains to Strict-Transport-Security when configured', function (): void {
+    Route::middleware('api')->get('api/v1/_test/ok', fn () => response()->json(['data' => []]));
+    config(['mes.hsts.include_subdomains' => true, 'mes.hsts.max_age' => 600]);
+
+    $response = $this->getJson('api/v1/_test/ok');
+
+    $response->assertOk()->assertHeader('Strict-Transport-Security', 'max-age=600; includeSubDomains');
+});
+
+it('omits Strict-Transport-Security when the max age is zero', function (): void {
+    Route::middleware('api')->get('api/v1/_test/ok', fn () => response()->json(['data' => []]));
+    config(['mes.hsts.max_age' => 0]);
+
+    $response = $this->getJson('api/v1/_test/ok');
+
+    $response->assertOk()->assertHeaderMissing('Strict-Transport-Security');
 });
