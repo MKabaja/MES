@@ -4,6 +4,7 @@ import {
 	CSRF_COOKIE_PATH,
 	getUiLanguage,
 } from '@/shared/config/app.config';
+import { assertNoPathTraversal } from './api-path';
 import {
 	hasLoadedCsrfCookie,
 	markCsrfCookieLoaded,
@@ -41,6 +42,13 @@ const METHODS_REQUIRING_CSRF: ReadonlySet<HttpMethod> = new Set([
 	'DELETE',
 ]);
 
+const CLIENT_OWNED_HEADERS = [
+	'Accept',
+	'Accept-Language',
+	'Content-Type',
+	'X-XSRF-TOKEN',
+] as const;
+
 let handleUnauthorized: UnauthorizedHandler = () => {};
 let pendingCsrfRequest: Promise<void> | null = null;
 
@@ -56,12 +64,16 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler): void {
  *
  * Retries once after a `419` with a fresh CSRF cookie. A `204` response is validated as `undefined`.
  *
+ * Headers set by the client (`Accept`, `Accept-Language`, `Content-Type`, `X-XSRF-TOKEN`) cannot be overridden through `options.headers`.
+ *
+ * @throws {@link RangeError} when `path` contains a `..` segment.
  * @throws {@link HttpError} for non-2xx responses, `NETWORK_ERROR` when no response arrived and `INVALID_RESPONSE` when the body does not match `schema`.
  */
 export async function http<TResponse>(
 	path: string,
 	options: HttpRequestOptions<TResponse>,
 ): Promise<TResponse> {
+	assertNoPathTraversal(path);
 	let response = await sendRequest(path, options);
 	if (response.status === STATUS_CSRF_MISMATCH) {
 		await ensureCsrfCookie(true);
@@ -114,19 +126,21 @@ function buildHeaders(
 	method: HttpMethod,
 	body: unknown,
 	extraHeaders: Record<string, string> = {},
-): Record<string, string> {
-	const headers: Record<string, string> = {
-		Accept: 'application/json',
-		'Accept-Language': getUiLanguage(),
-	};
+): Headers {
+	const headers = new Headers(extraHeaders);
+	for (const name of CLIENT_OWNED_HEADERS) {
+		headers.delete(name);
+	}
+	headers.set('Accept', 'application/json');
+	headers.set('Accept-Language', getUiLanguage());
 	if (body !== undefined && !(body instanceof FormData)) {
-		headers['Content-Type'] = 'application/json';
+		headers.set('Content-Type', 'application/json');
 	}
 	const xsrfToken = readXsrfToken();
 	if (METHODS_REQUIRING_CSRF.has(method) && xsrfToken !== null) {
-		headers['X-XSRF-TOKEN'] = xsrfToken;
+		headers.set('X-XSRF-TOKEN', xsrfToken);
 	}
-	return { ...headers, ...extraHeaders };
+	return headers;
 }
 
 function serializeBody(body: unknown): BodyInit | null {
@@ -162,8 +176,9 @@ async function buildHttpError(response: Response): Promise<HttpError> {
 }
 
 async function readJsonOrNull(response: Response): Promise<unknown> {
+	const text = await response.text();
 	try {
-		return JSON.parse(await response.text());
+		return JSON.parse(text);
 	} catch {
 		return null;
 	}
