@@ -44,8 +44,9 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-	-webkit-box-shadow: 0 0 0 1000px var(--color-bg) inset !important;
-	-webkit-text-fill-color: var(--color-text) !important;
+	-webkit-box-shadow: 0 0 0 1000px var(--color-bg) inset;
+	-webkit-text-fill-color: var(--color-text);
+	transition: background-color 600000s 0s;
 	caret-color: var(--color-text);
 }
 
@@ -77,6 +78,10 @@ input:-webkit-autofill:active {
 	::before,
 	::after {
 		border-color: var(--color-border);
-		outline-color: color-mix(in srgb, var(--color-accent-hover) 50%, transparent);
+		outline-color: color-mix(
+			in srgb,
+			var(--color-accent-hover) 50%,
+			transparent
+		);
 	}
 }
