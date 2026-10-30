@@ -1,6 +1,8 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
+process.env.TZ = 'America/New_York';
+
 export default defineConfig({
 	resolve: {
 		alias: {
