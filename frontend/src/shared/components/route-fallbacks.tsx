@@ -1,4 +1,5 @@
-import { Link } from '@tanstack/react-router';
+import { useQueryErrorResetBoundary } from '@tanstack/react-query';
+import { Link, useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { routeFallbackStyles } from './route-fallbacks.styles';
 
@@ -38,10 +39,18 @@ export function RouteNotFound() {
 type RouteErrorProps = { reset: () => void };
 
 /**
- * Default `errorComponent` with a retry action.
+ * Default `errorComponent` whose retry action resets query errors and reloads the route.
  */
 export function RouteError({ reset }: RouteErrorProps) {
 	const { t } = useTranslation();
+	const router = useRouter();
+	const queryErrorResetBoundary = useQueryErrorResetBoundary();
+
+	function handleRetry() {
+		queryErrorResetBoundary.reset();
+		reset();
+		void router.invalidate();
+	}
 
 	return (
 		<div role="alert" className={routeFallbackStyles.container}>
@@ -50,7 +59,7 @@ export function RouteError({ reset }: RouteErrorProps) {
 			</h1>
 			<button
 				type="button"
-				onClick={reset}
+				onClick={handleRetry}
 				className={routeFallbackStyles.action}
 			>
 				{t('routeFallbacks.retry')}
