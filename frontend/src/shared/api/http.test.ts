@@ -124,6 +124,90 @@ describe('http', () => {
 		expect(received).toHaveBeenCalledWith('key-1');
 	});
 
+	it('does not let caller headers override client-owned headers', async () => {
+		mockCookies('XSRF-TOKEN=real');
+		const received = vi.fn();
+		server.use(
+			mswHttp.post('*/api/v1/items', ({ request }) => {
+				received({
+					token: request.headers.get('X-XSRF-TOKEN'),
+					accept: request.headers.get('Accept'),
+					language: request.headers.get('Accept-Language'),
+				});
+				return HttpResponse.json({ data: { id: 1 } });
+			}),
+		);
+
+		await http('/items', {
+			method: 'POST',
+			schema: itemSchema,
+			headers: {
+				'x-xsrf-token': 'forged',
+				accept: 'text/html',
+				'Accept-Language': 'xx',
+			},
+		});
+
+		expect(received).toHaveBeenCalledWith({
+			token: 'real',
+			accept: 'application/json',
+			language: 'pl',
+		});
+	});
+
+	it('drops a forged X-XSRF-TOKEN when no cookie token exists', async () => {
+		const received = vi.fn();
+		server.use(
+			mswHttp.post('*/api/v1/items', ({ request }) => {
+				received(request.headers.get('X-XSRF-TOKEN'));
+				return HttpResponse.json({ data: { id: 1 } });
+			}),
+		);
+
+		await http('/items', {
+			method: 'POST',
+			schema: itemSchema,
+			headers: { 'X-XSRF-TOKEN': 'forged' },
+		});
+
+		expect(received).toHaveBeenCalledWith(null);
+	});
+
+	describe('path validation', () => {
+		it.each([
+			'/items/../admin',
+			'/items/..',
+			'/items/%2e%2e/admin',
+			'/items/..%2Fadmin',
+			'/items/..%5Cadmin',
+		])('rejects %s without sending a request', async (path) => {
+			const requested = vi.fn();
+			server.use(
+				mswHttp.all('*', () => {
+					requested();
+					return HttpResponse.json({ data: { id: 1 } });
+				}),
+			);
+
+			await expect(http(path, { schema: itemSchema })).rejects.toThrow(
+				RangeError,
+			);
+			expect(requested).not.toHaveBeenCalled();
+		});
+
+		it('allows dots inside a segment', async () => {
+			server.use(
+				mswHttp.get('*/api/v1/files/a..b', () =>
+					HttpResponse.json({ data: { id: 1 } }),
+				),
+			);
+
+			const result = await http('/files/a..b', { schema: itemSchema });
+
+			expect(result).toEqual({ data: { id: 1 } });
+		});
+	});
+
 	describe('X-XSRF-TOKEN header', () => {
 		it.each(['POST', 'PUT', 'PATCH', 'DELETE'] as const)(
 			'is sent with the decoded cookie value on %s',
@@ -330,6 +414,20 @@ describe('http', () => {
 			const error = await captureError(http('/items', { schema: itemSchema }));
 
 			expect(error.code).toBe('INVALID_RESPONSE');
+		});
+
+		it('rethrows a body read failure instead of reporting INVALID_RESPONSE', async () => {
+			server.use(
+				mswHttp.get('*/api/v1/items', () =>
+					HttpResponse.json({ data: { id: 1 } }),
+				),
+			);
+			const readFailure = new Error('body stream aborted');
+			vi.spyOn(Response.prototype, 'text').mockRejectedValue(readFailure);
+
+			await expect(http('/items', { schema: itemSchema })).rejects.toBe(
+				readFailure,
+			);
 		});
 
 		it('rethrows an abort instead of reporting NETWORK_ERROR', async () => {
