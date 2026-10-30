@@ -5,7 +5,7 @@ Time tracking on welding work orders and labour cost estimation.
 ## Structure
 
 - `backend/` — Laravel 13 + Sail + PostgreSQL
-- `frontend/` — React 19 + Vite (planned)
+- `frontend/` — React 19 + Vite + TanStack Router and Query
 
 ## Getting started
 
@@ -25,11 +25,27 @@ docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/app" -w /app \
 
 The API is available at http://localhost:8000 (health check: `/up`).
 
+### Frontend
+
+Requires Node 24.
+
+```bash
+cd frontend
+npm ci --ignore-scripts
+npm run dev
+```
+
+The app is available at http://localhost:5173; `/api` and `/sanctum` are proxied to the backend on port 8000.
+
+Testing the camera on a phone needs HTTPS on the local network (for example `vite --host` with `@vitejs/plugin-basic-ssl`).
+
 ## Verification
 
 ```bash
 cd backend
-./vendor/bin/sail composer check
-```
+./vendor/bin/sail composer check   # Pint, Larastan, Pest
 
-Runs Pint, Larastan and Pest.
+cd ../frontend
+npm run check                      # Biome, TypeScript, Vitest
+npm run build
+```
