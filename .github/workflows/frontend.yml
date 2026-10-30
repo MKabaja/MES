@@ -52,3 +52,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Verify route tree is up to date
+        run: git diff --exit-code -- src/routeTree.gen.ts
