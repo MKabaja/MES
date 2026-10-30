@@ -4,7 +4,7 @@ import { renderWithProviders } from '@/test/render';
 
 describe('index route', () => {
 	it('renders the home page at /', async () => {
-		await renderWithProviders({ route: '/' });
+		await renderWithProviders(undefined, { route: '/' });
 
 		expect(
 			await screen.findByRole('heading', { name: 'OK' }),
@@ -12,7 +12,7 @@ describe('index route', () => {
 	});
 
 	it('shows the not found page for an unknown path', async () => {
-		await renderWithProviders({ route: '/nie-ma-takiej-strony' });
+		await renderWithProviders(undefined, { route: '/nie-ma-takiej-strony' });
 
 		expect(
 			await screen.findByRole('heading', { name: /nie znaleziono strony/i }),

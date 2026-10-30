@@ -11,12 +11,8 @@ describe('shouldRetryQuery', () => {
 		expect(shouldRetryQuery(0, httpError(0, 'NETWORK_ERROR'))).toBe(true);
 	});
 
-	it('retries once after a 5xx response', () => {
-		expect(shouldRetryQuery(0, httpError(503, 'SERVER_ERROR'))).toBe(true);
-	});
-
-	it('retries once after a 500 response', () => {
-		expect(shouldRetryQuery(0, httpError(500, 'SERVER_ERROR'))).toBe(true);
+	it.each([500, 503])('retries once after a %i response', (status) => {
+		expect(shouldRetryQuery(0, httpError(status, 'SERVER_ERROR'))).toBe(true);
 	});
 
 	it('does not retry a 4xx response', () => {
