@@ -1,8 +1,10 @@
 import { z } from 'zod';
+import { type UiLanguage, uiLanguageSchema } from '@/shared/config/app.config';
 
 type StorageValues = {
 	'mes.stationMode': boolean;
 	'mes.sidebarCollapsed': boolean;
+	'mes.uiLanguage': UiLanguage;
 };
 
 export type StorageKey = keyof StorageValues;
@@ -19,6 +21,7 @@ type StorageEntryByKey = {
 const storageEntryByKey: StorageEntryByKey = {
 	'mes.stationMode': { schema: z.boolean(), fallback: false },
 	'mes.sidebarCollapsed': { schema: z.boolean(), fallback: false },
+	'mes.uiLanguage': { schema: uiLanguageSchema, fallback: 'pl' },
 };
 
 /**

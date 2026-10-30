@@ -71,6 +71,26 @@ describe('readStorage', () => {
 	});
 });
 
+describe('readStorage for mes.uiLanguage', () => {
+	it('returns a stored supported language', () => {
+		stubStorage({ 'mes.uiLanguage': '"en"' });
+
+		expect(readStorage('mes.uiLanguage')).toBe('en');
+	});
+
+	it.each(['"de"', '"EN"', '{not json'])('returns Polish for %s', (raw) => {
+		stubStorage({ 'mes.uiLanguage': raw });
+
+		expect(readStorage('mes.uiLanguage')).toBe('pl');
+	});
+
+	it('returns Polish when nothing is stored', () => {
+		stubStorage();
+
+		expect(readStorage('mes.uiLanguage')).toBe('pl');
+	});
+});
+
 describe('writeStorage', () => {
 	it('persists a value that readStorage returns', () => {
 		const items = stubStorage();

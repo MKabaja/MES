@@ -1,10 +1,14 @@
+import { z } from 'zod';
+
 export const API_BASE = '/api/v1';
 
 export const CSRF_COOKIE_PATH = '/sanctum/csrf-cookie';
 
 export const PLANT_TIMEZONE = 'Europe/Warsaw';
 
-export type UiLanguage = 'pl' | 'en';
+export const uiLanguageSchema = z.enum(['pl', 'en']);
+
+export type UiLanguage = z.infer<typeof uiLanguageSchema>;
 
 type FormatLocaleByLanguage = Record<UiLanguage, string>;
 
