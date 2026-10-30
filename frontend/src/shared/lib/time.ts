@@ -4,6 +4,7 @@ import { PLANT_TIMEZONE } from '@/shared/config/app.config';
 import { EMPTY_VALUE } from '@/shared/lib/format.constants';
 
 const SECONDS_PER_MINUTE = 60;
+const MINUTES_PER_HOUR = 60;
 const SECONDS_PER_HOUR = 3600;
 const MILLISECONDS_PER_MINUTE = 60_000;
 const MILLISECONDS_PER_DAY = 86_400_000;
@@ -49,8 +50,8 @@ export function formatDuration(seconds: number): string {
 	}
 
 	const totalMinutes = Math.floor(seconds / SECONDS_PER_MINUTE);
-	const hours = Math.floor(totalMinutes / SECONDS_PER_MINUTE);
-	const minutes = totalMinutes % SECONDS_PER_MINUTE;
+	const hours = Math.floor(totalMinutes / MINUTES_PER_HOUR);
+	const minutes = totalMinutes % MINUTES_PER_HOUR;
 
 	if (hours === 0 && minutes === 0) {
 		return '< 1 min';

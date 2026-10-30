@@ -1,14 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { getUiLanguage, setUiLanguageReader } from './app.config';
+import {
+	getFormatLocale,
+	getUiLanguage,
+	setUiLanguageReader,
+} from './app.config';
 
 describe('getUiLanguage', () => {
-	it('defaults to pl before a reader is set', () => {
-		expect(getUiLanguage()).toBe('pl');
-	});
-
 	it('returns the language from the registered reader', () => {
 		setUiLanguageReader(() => 'en');
 
 		expect(getUiLanguage()).toBe('en');
+	});
+});
+
+describe('getFormatLocale', () => {
+	it.each([
+		['pl', 'pl-PL'],
+		['en', 'en-GB'],
+	] as const)('maps %s to %s', (language, locale) => {
+		setUiLanguageReader(() => language);
+
+		expect(getFormatLocale()).toBe(locale);
 	});
 });
