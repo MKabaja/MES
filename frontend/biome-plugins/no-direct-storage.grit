@@ -1,0 +1,8 @@
+language js
+
+or {
+	`localStorage`,
+	`sessionStorage`
+} as $storage where {
+	register_diagnostic(span=$storage, message="Use src/shared/lib/storage.ts instead of accessing web storage directly.", severity="error")
+}
