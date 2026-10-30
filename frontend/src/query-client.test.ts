@@ -1,30 +1,33 @@
 import { describe, expect, it } from 'vitest';
+import { HttpError } from '@/shared/api/http-error';
 import { createQueryClient, shouldRetryQuery } from './query-client';
+
+function httpError(status: number, code: string): HttpError {
+	return new HttpError({ status, code, message: 'error' });
+}
 
 describe('shouldRetryQuery', () => {
 	it('retries once after a network error', () => {
-		expect(shouldRetryQuery(0, { status: 0, code: 'NETWORK_ERROR' })).toBe(
-			true,
-		);
+		expect(shouldRetryQuery(0, httpError(0, 'NETWORK_ERROR'))).toBe(true);
 	});
 
 	it('retries once after a 5xx response', () => {
-		expect(shouldRetryQuery(0, { status: 503, code: 'SERVER_ERROR' })).toBe(
-			true,
-		);
+		expect(shouldRetryQuery(0, httpError(503, 'SERVER_ERROR'))).toBe(true);
+	});
+
+	it('retries once after a 500 response', () => {
+		expect(shouldRetryQuery(0, httpError(500, 'SERVER_ERROR'))).toBe(true);
 	});
 
 	it('does not retry a 4xx response', () => {
-		expect(shouldRetryQuery(0, { status: 404, code: 'NOT_FOUND' })).toBe(false);
+		expect(shouldRetryQuery(0, httpError(404, 'NOT_FOUND'))).toBe(false);
 	});
 
 	it('does not retry a second time', () => {
-		expect(shouldRetryQuery(1, { status: 0, code: 'NETWORK_ERROR' })).toBe(
-			false,
-		);
+		expect(shouldRetryQuery(1, httpError(0, 'NETWORK_ERROR'))).toBe(false);
 	});
 
-	it('does not retry an error without status and code', () => {
+	it('does not retry an error that is not an HttpError', () => {
 		expect(shouldRetryQuery(0, new Error('boom'))).toBe(false);
 	});
 });
@@ -34,6 +37,7 @@ describe('createQueryClient', () => {
 		const defaults = createQueryClient().getDefaultOptions();
 
 		expect(defaults.queries?.staleTime).toBe(30_000);
+		expect(defaults.queries?.retry).toBe(shouldRetryQuery);
 		expect(defaults.mutations?.retry).toBe(0);
 	});
 });

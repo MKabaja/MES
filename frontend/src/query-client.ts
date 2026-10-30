@@ -1,25 +1,13 @@
 import { QueryClient } from '@tanstack/react-query';
+import { HttpError, NETWORK_ERROR_CODE } from '@/shared/api/http-error';
 
 const MAX_QUERY_RETRIES = 1;
 
-type StatusCarrier = { status: number; code: string };
-
-function isStatusCarrier(error: unknown): error is StatusCarrier {
-	return (
-		typeof error === 'object' &&
-		error !== null &&
-		'status' in error &&
-		typeof error.status === 'number' &&
-		'code' in error &&
-		typeof error.code === 'string'
-	);
-}
-
 function isRetryableError(error: unknown): boolean {
-	if (!isStatusCarrier(error)) {
+	if (!(error instanceof HttpError)) {
 		return false;
 	}
-	return error.code === 'NETWORK_ERROR' || error.status >= 500;
+	return error.code === NETWORK_ERROR_CODE || error.status >= 500;
 }
 
 /**
