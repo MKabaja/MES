@@ -12,12 +12,15 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\OriginMismatchException;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
@@ -47,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
             string $message,
             array $errors = [],
             array $headers = [],
+            ?int $status = null,
         ): JsonResponse {
             $body = ['message' => $message, 'code' => $code->value];
 
@@ -54,7 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $body['errors'] = $errors;
             }
 
-            return response()->json($body, $code->status(), $headers);
+            return response()->json($body, $status ?? $code->status(), $headers);
         };
 
         $exceptions->render(function (Throwable $exception, Request $request) use ($envelope): ?JsonResponse {
@@ -64,6 +68,18 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $forbidden = fn () => $envelope(ErrorCode::Forbidden, 'Brak uprawnień do wykonania tej operacji.');
             $notFound = fn () => $envelope(ErrorCode::NotFound, 'Nie znaleziono zasobu.');
+            $badRequest = fn () => $envelope(ErrorCode::BadRequest, 'Niepoprawne żądanie.');
+            $messageForGeneralCode = fn (ErrorCode $code): string => match ($code) {
+                ErrorCode::Unauthenticated => 'Brak aktywnej sesji. Zaloguj się.',
+                ErrorCode::Forbidden => 'Brak uprawnień do wykonania tej operacji.',
+                ErrorCode::NotFound => 'Nie znaleziono zasobu.',
+                ErrorCode::MethodNotAllowed => 'Metoda HTTP nie jest obsługiwana dla tego adresu.',
+                ErrorCode::PayloadTooLarge => 'Żądanie jest zbyt duże.',
+                ErrorCode::CsrfMismatch => 'Sesja wygasła. Odśwież stronę i spróbuj ponownie.',
+                ErrorCode::ValidationFailed => 'Dane są nieprawidłowe.',
+                ErrorCode::TooManyRequests => 'Zbyt wiele żądań. Spróbuj ponownie za chwilę.',
+                default => 'Niepoprawne żądanie.',
+            };
             $cause = $exception->getPrevious();
 
             return match (true) {
@@ -84,6 +100,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 ),
                 $exception instanceof AccessDeniedHttpException => $forbidden(),
                 $exception instanceof NotFoundHttpException => $notFound(),
+                $exception instanceof BadRequestHttpException => $badRequest(),
+                $exception instanceof MethodNotAllowedHttpException => $envelope(
+                    ErrorCode::MethodNotAllowed,
+                    'Metoda HTTP nie jest obsługiwana dla tego adresu.',
+                    headers: array_intersect_key($exception->getHeaders(), ['Allow' => true]),
+                ),
+                $exception instanceof PostTooLargeException => $envelope(
+                    ErrorCode::PayloadTooLarge,
+                    'Żądanie jest zbyt duże.',
+                ),
                 $exception instanceof TooManyRequestsHttpException => $envelope(
                     ErrorCode::TooManyRequests,
                     'Zbyt wiele żądań. Spróbuj ponownie za chwilę.',
@@ -97,6 +123,16 @@ return Application::configure(basePath: dirname(__DIR__))
                     ? $notFound()
                     : $forbidden(),
                 $exception instanceof HttpException && $cause instanceof OriginMismatchException => $forbidden(),
+                $exception instanceof HttpException && $exception->getStatusCode() === 503 => $envelope(
+                    ErrorCode::ServiceUnavailable,
+                    'Usługa jest chwilowo niedostępna.',
+                    headers: array_intersect_key($exception->getHeaders(), ['Retry-After' => true]),
+                ),
+                $exception instanceof HttpException && $exception->getStatusCode() >= 400 && $exception->getStatusCode() < 500 => $envelope(
+                    ErrorCode::forHttpStatus($exception->getStatusCode()),
+                    $messageForGeneralCode(ErrorCode::forHttpStatus($exception->getStatusCode())),
+                    status: $exception->getStatusCode(),
+                ),
                 default => $envelope(ErrorCode::ServerError, 'Wystąpił błąd serwera.'),
             };
         });

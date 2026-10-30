@@ -10,12 +10,17 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\OriginMismatchException;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\GoneHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 function throwFromTestRoute(Throwable $exception): void
@@ -36,6 +41,10 @@ function statusByErrorCode(): array
         'VALIDATION_FAILED' => 422,
         'TOO_MANY_REQUESTS' => 429,
         'SERVER_ERROR' => 500,
+        'BAD_REQUEST' => 400,
+        'METHOD_NOT_ALLOWED' => 405,
+        'PAYLOAD_TOO_LARGE' => 413,
+        'SERVICE_UNAVAILABLE' => 503,
         'INVALID_CREDENTIALS' => 422,
         'ACCOUNT_INACTIVE' => 403,
         'NETWORK_NOT_ALLOWED' => 403,
@@ -108,6 +117,13 @@ it('renders framework exceptions in the envelope', function (Closure $makeExcept
     'route not found' => [fn () => new NotFoundHttpException, 404, 'NOT_FOUND', 'Nie znaleziono zasobu.'],
     'origin mismatch' => [fn () => new OriginMismatchException, 403, 'FORBIDDEN', 'Brak uprawnień do wykonania tej operacji.'],
     'csrf mismatch' => [fn () => new TokenMismatchException, 419, 'CSRF_MISMATCH', 'Sesja wygasła. Odśwież stronę i spróbuj ponownie.'],
+    'bad request' => [fn () => new BadRequestHttpException, 400, 'BAD_REQUEST', 'Niepoprawne żądanie.'],
+    'payload too large' => [fn () => new PostTooLargeException, 413, 'PAYLOAD_TOO_LARGE', 'Żądanie jest zbyt duże.'],
+    'maintenance mode' => [fn () => new HttpException(503), 503, 'SERVICE_UNAVAILABLE', 'Usługa jest chwilowo niedostępna.'],
+    'other client error' => [fn () => new GoneHttpException, 410, 'BAD_REQUEST', 'Niepoprawne żądanie.'],
+    'abort 401' => [fn () => new HttpException(401), 401, 'UNAUTHENTICATED', 'Brak aktywnej sesji. Zaloguj się.'],
+    'abort 404' => [fn () => new HttpException(404), 404, 'NOT_FOUND', 'Nie znaleziono zasobu.'],
+    'server error status' => [fn () => new HttpException(502), 500, 'SERVER_ERROR', 'Wystąpił błąd serwera.'],
     'throttled' => [fn () => new ThrottleRequestsException, 429, 'TOO_MANY_REQUESTS', 'Zbyt wiele żądań. Spróbuj ponownie za chwilę.'],
 ]);
 
@@ -186,4 +202,38 @@ it('hides details of unexpected errors when debug is on', function (): void {
     $response->assertStatus(500)
         ->assertExactJson(['message' => 'Wystąpił błąd serwera.', 'code' => 'SERVER_ERROR']);
     expect($response->getContent())->not->toContain('secret internals');
+});
+
+it('returns 405 with the Allow header when the method is not supported', function (): void {
+    Route::middleware('api')->get('api/v1/_test/only-get', fn () => response()->json(['data' => []]));
+
+    $response = $this->postJson('api/v1/_test/only-get');
+
+    $response->assertStatus(405)
+        ->assertHeader('Allow', 'GET, HEAD')
+        ->assertExactJson(['message' => 'Metoda HTTP nie jest obsługiwana dla tego adresu.', 'code' => 'METHOD_NOT_ALLOWED']);
+});
+
+it('keeps the Allow header from the exception', function (): void {
+    throwFromTestRoute(new MethodNotAllowedHttpException(['GET', 'PUT']));
+
+    $response = $this->getJson('api/v1/_test/throw');
+
+    $response->assertStatus(405)->assertHeader('Allow', 'GET, PUT');
+});
+
+it('keeps the Retry-After header in maintenance mode', function (): void {
+    throwFromTestRoute(new HttpException(503, headers: ['Retry-After' => '60']));
+
+    $response = $this->getJson('api/v1/_test/throw');
+
+    $response->assertStatus(503)->assertHeader('Retry-After', '60');
+});
+
+it('keeps the status of other client errors', function (): void {
+    throwFromTestRoute(new HttpException(410));
+
+    $response = $this->getJson('api/v1/_test/throw');
+
+    $response->assertStatus(410)->assertJsonPath('code', 'BAD_REQUEST');
 });
