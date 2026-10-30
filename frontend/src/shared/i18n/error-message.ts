@@ -1,22 +1,22 @@
-import type { HttpError } from '@/shared/api/http-error';
+import {
+	type HttpError,
+	INVALID_RESPONSE_CODE,
+	NETWORK_ERROR_CODE,
+} from '@/shared/api/http-error';
 import { i18n } from './i18n';
-import { resourcesByLanguage } from './i18n.constants';
-import type { I18nResources } from './i18n.types';
-
-type TranslatedErrorCode = keyof I18nResources['errors'];
-
-function hasTranslation(code: string): code is TranslatedErrorCode {
-	return Object.hasOwn(resourcesByLanguage.pl.errors, code);
-}
 
 /**
- * Returns the error text in the current UI language, chosen by `error.code`.
+ * Returns the text to show for an error.
  *
- * Falls back to the API `message` when the code has no translation.
+ * Client-side codes (`NETWORK_ERROR`, `INVALID_RESPONSE`) are translated to the UI language;
+ * every other message comes from the API unchanged, since the server localizes it.
  */
 export function getErrorMessage(error: HttpError): string {
-	if (!hasTranslation(error.code)) {
-		return error.message;
+	if (error.code === NETWORK_ERROR_CODE) {
+		return i18n.t('NETWORK_ERROR', { ns: 'errors' });
 	}
-	return i18n.t(error.code, { ns: 'errors' });
+	if (error.code === INVALID_RESPONSE_CODE) {
+		return i18n.t('INVALID_RESPONSE', { ns: 'errors' });
+	}
+	return error.message;
 }
