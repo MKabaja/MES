@@ -3,7 +3,10 @@ import { cleanup } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import { server } from './msw/server';
 
-beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
+beforeAll(() => {
+	server.listen({ onUnhandledFrame: 'error' });
+	vi.stubGlobal('scrollTo', vi.fn());
+});
 
 afterEach(() => {
 	cleanup();
