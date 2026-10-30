@@ -19,8 +19,8 @@
 	--color-cat-teal: #2dd4bf;
 	--color-cat-violet: #a78bfa;
 
-	--font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
-	--font-sans: 'IBM Plex Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+	--font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+	--font-sans: "IBM Plex Sans", system-ui, "Segoe UI", Roboto, sans-serif;
 
 	--radius-sm: 6px;
 	--radius-md: 10px;
@@ -29,8 +29,11 @@
 	--shadow-raised:
 		6px 6px 16px rgba(0, 0, 0, 0.42), -4px -4px 12px rgba(255, 255, 255, 0.022),
 		inset 0 1px 0 rgba(255, 255, 255, 0.045);
-	--shadow-raised-sm: 3px 3px 8px rgba(0, 0, 0, 0.4), -2px -2px 6px rgba(255, 255, 255, 0.025);
-	--shadow-inset: inset 3px 3px 7px rgba(0, 0, 0, 0.48), inset -2px -2px 5px rgba(255, 255, 255, 0.028);
+	--shadow-raised-sm:
+		3px 3px 8px rgba(0, 0, 0, 0.4), -2px -2px 6px rgba(255, 255, 255, 0.025);
+	--shadow-inset:
+		inset 3px 3px 7px rgba(0, 0, 0, 0.48),
+		inset -2px -2px 5px rgba(255, 255, 255, 0.028);
 }
 
 @theme inline {
