@@ -101,7 +101,7 @@ it('saves the settings, returns them and records the change in the audit log', f
     $audit = AuditLog::query()->sole();
     expect($audit->action)->toBe('settings.updated')
         ->and($audit->user_id)->toBe($admin->id)
-        ->and($audit->subject_type)->toBe((new Setting)->getMorphClass())
+        ->and($audit->subject_type)->toBe('settings')
         ->and($audit->subject_id)->toBe(Setting::SINGLETON_ID)
         ->and($audit->ip)->toBe('203.0.113.9')
         ->and(withSortedKeys($audit->before))->toBe(withSortedKeys(settingsPayload(['worker_allowed_networks' => []])))

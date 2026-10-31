@@ -23,7 +23,7 @@ it('stores actor, action, subject, values and ip', function (): void {
         'id' => $entry->id,
         'user_id' => $actor->id,
         'action' => 'user.deactivated',
-        'subject_type' => $subject->getMorphClass(),
+        'subject_type' => 'user',
         'subject_id' => $subject->id,
         'ip' => '203.0.113.7',
     ]);
