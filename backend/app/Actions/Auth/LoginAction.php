@@ -64,6 +64,7 @@ final readonly class LoginAction
             $verifiedHash = $this->rehashPassword($user, $credentials->password, $verifiedHash);
         }
 
+        $session->flush();
         $this->guard->login($user);
         $session->regenerate(destroy: true);
         $session->put(
