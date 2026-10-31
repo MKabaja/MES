@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Enums\ErrorCode;
 use App\Domain\Exceptions\DomainException;
+use App\Http\Middleware\EnsureRequestHasSession;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureWorkerNetworkAllowed;
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => EnsureUserIsActive::class,
             'network' => EnsureWorkerNetworkAllowed::class,
             'role' => EnsureRole::class,
+            'stateful' => EnsureRequestHasSession::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

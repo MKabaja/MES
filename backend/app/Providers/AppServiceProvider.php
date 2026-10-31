@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use LogicException;
 
 class AppServiceProvider extends ServiceProvider
@@ -34,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Model::shouldBeStrict(! $this->app->isProduction());
         Date::use(CarbonImmutable::class);
+        Sanctum::getAccessTokenFromRequestUsing(fn (): ?string => null);
 
         RateLimiter::for('login', function (Request $request): Limit {
             $login = $request->input('login');
