@@ -163,6 +163,8 @@ it('returns 422 and saves nothing when a rule is broken', function (array $overr
     'restriction enabled without networks' => [['worker_network_restriction_enabled' => true, 'worker_allowed_networks' => []], 'worker_allowed_networks'],
     'network that is not an address' => [['worker_allowed_networks' => ['10.0.0.0/8', 'office']], 'worker_allowed_networks.1'],
     'duplicated network' => [['worker_allowed_networks' => ['10.0.0.0/8', '192.168.1.0/24', '10.0.0.0/8']], 'worker_allowed_networks.2'],
+    'equivalent IPv6 spellings of one network' => [['worker_allowed_networks' => ['::1', '0::1']], 'worker_allowed_networks.1'],
+    'IPv4-mapped IPv6 network' => [['worker_allowed_networks' => ['::ffff:10.0.0.0/104']], 'worker_allowed_networks.0'],
     'IPv4 range covering every address' => [['worker_allowed_networks' => ['0.0.0.0/0']], 'worker_allowed_networks.0'],
 ]);
 

@@ -14,7 +14,7 @@ class ValidNetwork implements ValidationRule
     private const int MAX_IPV6_PREFIX = 128;
 
     /**
-     * Fails unless the value is an IPv4 or IPv6 address, optionally followed by a CIDR prefix in range for its version, and rejects ranges that cover every address.
+     * Fails unless the value is an IPv4 or IPv6 address, optionally followed by a CIDR prefix in range for its version, and rejects ranges that cover every address and IPv4-mapped IPv6 addresses.
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -24,9 +24,24 @@ class ValidNetwork implements ValidationRule
             return;
         }
 
+        if ($this->isIpv4Mapped($value)) {
+            $fail('validation.network_ipv4_mapped')->translate();
+
+            return;
+        }
+
         if ($this->coversEveryAddress($value)) {
             $fail('validation.network_too_broad')->translate();
         }
+    }
+
+    private function isIpv4Mapped(string $value): bool
+    {
+        $packedAddress = inet_pton(explode('/', $value)[0]);
+
+        return $packedAddress !== false
+            && strlen($packedAddress) === 16
+            && str_starts_with($packedAddress, str_repeat("\0", 10)."\xff\xff");
     }
 
     private function coversEveryAddress(string $value): bool
