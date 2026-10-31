@@ -6,6 +6,9 @@ namespace App\Providers;
 
 use App\Actions\Auth\LoginAction;
 use App\Actions\Auth\LogoutAction;
+use App\Models\AuditLog;
+use App\Models\Setting;
+use App\Models\User;
 use App\Repositories\SettingsRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\SessionGuard;
@@ -13,6 +16,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\RateLimiter;
@@ -39,6 +43,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::shouldBeStrict(! $this->app->isProduction());
+        Relation::enforceMorphMap([
+            'user' => User::class,
+            'settings' => Setting::class,
+            'audit_log' => AuditLog::class,
+        ]);
         Date::use(CarbonImmutable::class);
         Sanctum::getAccessTokenFromRequestUsing(fn (): ?string => null);
 
