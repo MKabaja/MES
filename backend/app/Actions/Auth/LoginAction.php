@@ -11,6 +11,7 @@ use App\Domain\Services\WorkerNetworkAccess;
 use App\Models\User;
 use App\Repositories\SettingsRepository;
 use App\Support\Auth\DummyPasswordHash;
+use App\Support\Auth\FailedLoginLimiter;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Contracts\Session\Session;
@@ -22,17 +23,20 @@ final readonly class LoginAction
         private StatefulGuard $guard,
         private Hasher $hasher,
         private DummyPasswordHash $dummyPasswordHash,
+        private FailedLoginLimiter $failedLoginLimiter,
         private WorkerNetworkAccess $networkAccess,
         private SettingsRepository $settings,
     ) {}
 
     /**
-     * Signs the user in with a case-insensitive login from an allowed network and starts a fresh session.
+     * Signs the user in with a case-insensitive login from an allowed network and starts a fresh session, refusing networks with too many recent failed attempts.
      *
      * @throws DomainException INVALID_CREDENTIALS for an unknown login or a wrong password, ACCOUNT_INACTIVE for a disabled account, NETWORK_NOT_ALLOWED for a non-admin outside the allowed networks
      */
     public function handle(LoginData $credentials, string $ip, Session $session): User
     {
+        $this->failedLoginLimiter->ensureNotBlocked($ip);
+
         $user = User::query()
             ->whereRaw('lower(login) = ?', [Str::lower($credentials->login)])
             ->first();
@@ -41,6 +45,8 @@ final readonly class LoginAction
         $isPasswordValid = $this->hasher->check($credentials->password, $user->password ?? $dummyHash);
 
         if ($user === null || ! $isPasswordValid) {
+            $this->failedLoginLimiter->recordFailure($ip);
+
             throw new DomainException(ErrorCode::InvalidCredentials, field: 'login');
         }
 
