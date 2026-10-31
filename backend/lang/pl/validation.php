@@ -161,5 +161,8 @@ return [
 
     'custom' => [],
 
-    'attributes' => [],
+    'attributes' => [
+        'login' => 'login',
+        'password' => 'hasło',
+    ],
 ];
