@@ -1,0 +1,87 @@
+:root {
+	color-scheme: dark;
+	--background: var(--color-bg);
+	--foreground: var(--color-text);
+	--card: var(--color-surface);
+	--card-foreground: var(--color-text);
+	--popover: var(--color-surface-2);
+	--popover-foreground: var(--color-text);
+	--primary: var(--color-accent);
+	--primary-foreground: var(--color-on-accent);
+	--secondary: var(--color-surface);
+	--secondary-foreground: var(--color-text);
+	--muted: var(--color-surface-2);
+	--muted-foreground: var(--color-text-3);
+	--accent-foreground: var(--color-text);
+	--destructive: var(--color-danger);
+	--input: var(--color-border-input);
+	--ring: var(--color-accent-hover);
+}
+
+@layer base {
+	*,
+	::before,
+	::after {
+		border-color: var(--color-border);
+		outline-color: color-mix(
+			in srgb,
+			var(--color-accent-hover) 50%,
+			transparent
+		);
+	}
+
+	body {
+		@apply bg-bg font-sans text-[15px] leading-[1.55] text-text;
+	}
+
+	h1,
+	h2,
+	h3 {
+		@apply font-mono;
+	}
+
+	h1 {
+		@apply text-[30px] leading-9 font-bold tracking-[-0.01em];
+	}
+
+	h2 {
+		@apply text-[20px] leading-[26px] font-bold;
+	}
+
+	h3 {
+		@apply text-[17px] leading-6 font-medium;
+	}
+
+	input:-webkit-autofill,
+	input:-webkit-autofill:hover,
+	input:-webkit-autofill:focus,
+	input:-webkit-autofill:active {
+		-webkit-box-shadow: 0 0 0 1000px var(--color-bg) inset;
+		-webkit-text-fill-color: var(--color-text);
+		transition: background-color 600000s 0s;
+		caret-color: var(--color-text);
+	}
+
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: var(--color-bg);
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: var(--color-border);
+		border-radius: 5px;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: var(--color-text-3);
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--color-accent-hover);
+		outline-offset: 3px;
+	}
+}

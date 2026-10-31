@@ -1,0 +1,8 @@
+language js
+
+or {
+	`fetch($args)`,
+	`$_.fetch($args)`
+} where {
+	register_diagnostic(span=$args, message="Use the http client from src/shared/api/http.ts instead of fetch.", severity="error")
+}
