@@ -16,7 +16,7 @@ class AuthController extends Controller
 {
     public function login(LoginRequest $request, LoginAction $login): UserResource
     {
-        return new UserResource($login->handle($request->toData(), $request->session()));
+        return new UserResource($login->handle($request->toData(), (string) $request->ip(), $request->session()));
     }
 
     public function logout(Request $request, LogoutAction $logout): Response

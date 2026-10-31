@@ -19,6 +19,22 @@ class User extends Authenticatable
     use HasFactory;
 
     /**
+     * Tells whether the user works in the office.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === Role::Admin;
+    }
+
+    /**
+     * Tells whether the user works on the shop floor.
+     */
+    public function isWorker(): bool
+    {
+        return $this->role === Role::Worker;
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

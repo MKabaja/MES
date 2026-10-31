@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 use App\Domain\Enums\ErrorCode;
 use App\Domain\Exceptions\DomainException;
+use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\EnsureWorkerNetworkAllowed;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocaleFromHeader;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -35,6 +38,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend([SecurityHeaders::class, SetLocaleFromHeader::class]);
         $middleware->statefulApi();
+        $middleware->alias([
+            'active' => EnsureUserIsActive::class,
+            'network' => EnsureWorkerNetworkAllowed::class,
+            'role' => EnsureRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontReport(DomainException::class);
