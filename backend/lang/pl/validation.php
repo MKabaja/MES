@@ -159,10 +159,48 @@ return [
     'ulid' => 'Pole :attribute musi być poprawnym identyfikatorem ULID.',
     'uuid' => 'Pole :attribute musi być poprawnym identyfikatorem UUID.',
 
-    'custom' => [],
+    'network' => 'Pole :attribute musi być adresem IPv4 lub IPv6 albo zakresem CIDR.',
+    'network_too_broad' => 'Pole :attribute nie może obejmować wszystkich adresów (prefiks 0).',
+    'break_overlap' => 'Przerwy nie mogą się nakładać.',
+
+    'custom' => [
+        'shift_end' => [
+            'after' => 'Koniec zmiany musi być późniejszy niż początek zmiany.',
+        ],
+        'breaks' => [
+            '*' => [
+                'start' => [
+                    'after_or_equal' => 'Przerwa nie może zaczynać się przed początkiem zmiany.',
+                ],
+                'end' => [
+                    'after' => 'Koniec przerwy musi być późniejszy niż jej początek.',
+                    'before_or_equal' => 'Przerwa nie może kończyć się po końcu zmiany.',
+                ],
+            ],
+        ],
+        'worker_allowed_networks' => [
+            '*' => [
+                'distinct' => 'Dozwolone sieci nie mogą się powtarzać.',
+            ],
+            'required_if_accepted' => 'Włączone ograniczenie sieci wymaga co najmniej jednej dozwolonej sieci.',
+        ],
+    ],
 
     'attributes' => [
         'login' => 'login',
         'password' => 'hasło',
+        'shift_start' => 'początek zmiany',
+        'shift_end' => 'koniec zmiany',
+        'breaks' => 'przerwy',
+        'breaks.*' => 'przerwa',
+        'breaks.*.start' => 'początek przerwy',
+        'breaks.*.end' => 'koniec przerwy',
+        'deduct_breaks' => 'odliczanie przerw',
+        'auto_pause_enabled' => 'automatyczna pauza',
+        'worker_backdate_days' => 'liczba dni wstecz',
+        'station_idle_logout_minutes' => 'czas bezczynności stanowiska',
+        'worker_network_restriction_enabled' => 'ograniczenie sieci',
+        'worker_allowed_networks' => 'dozwolone sieci',
+        'worker_allowed_networks.*' => 'sieć',
     ],
 ];

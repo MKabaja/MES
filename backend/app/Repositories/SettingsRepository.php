@@ -22,6 +22,14 @@ class SettingsRepository
     }
 
     /**
+     * Reads the plant settings from the database under a row lock, bypassing the memoized copy.
+     */
+    public function readForUpdate(): PlantSettings
+    {
+        return $this->toValueObject(Setting::query()->lockForUpdate()->findOrFail(Setting::SINGLETON_ID));
+    }
+
+    /**
      * Persists the plant settings in a transaction and drops the memoized copy.
      */
     public function save(PlantSettings $settings): void

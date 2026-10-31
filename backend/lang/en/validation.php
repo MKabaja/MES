@@ -160,11 +160,49 @@ return [
     'ulid' => 'The :attribute field must be a valid ULID.',
     'uuid' => 'The :attribute field must be a valid UUID.',
 
-    'custom' => [],
+    'network' => 'The :attribute field must be an IPv4 or IPv6 address or a CIDR range.',
+    'network_too_broad' => 'The :attribute field must not cover every address (prefix 0).',
+    'break_overlap' => 'Breaks must not overlap.',
+
+    'custom' => [
+        'shift_end' => [
+            'after' => 'The shift end must be later than the shift start.',
+        ],
+        'breaks' => [
+            '*' => [
+                'start' => [
+                    'after_or_equal' => 'A break must not start before the shift starts.',
+                ],
+                'end' => [
+                    'after' => 'A break must end later than it starts.',
+                    'before_or_equal' => 'A break must not end after the shift ends.',
+                ],
+            ],
+        ],
+        'worker_allowed_networks' => [
+            '*' => [
+                'distinct' => 'Allowed networks must not repeat.',
+            ],
+            'required_if_accepted' => 'Enabling the network restriction requires at least one allowed network.',
+        ],
+    ],
 
     'attributes' => [
         'login' => 'login',
         'password' => 'password',
+        'shift_start' => 'shift start',
+        'shift_end' => 'shift end',
+        'breaks' => 'breaks',
+        'breaks.*' => 'break',
+        'breaks.*.start' => 'break start',
+        'breaks.*.end' => 'break end',
+        'deduct_breaks' => 'break deduction',
+        'auto_pause_enabled' => 'automatic pause',
+        'worker_backdate_days' => 'backdate days',
+        'station_idle_logout_minutes' => 'station idle time',
+        'worker_network_restriction_enabled' => 'network restriction',
+        'worker_allowed_networks' => 'allowed networks',
+        'worker_allowed_networks.*' => 'network',
     ],
 
 ];
