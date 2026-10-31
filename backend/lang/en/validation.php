@@ -166,6 +166,7 @@ return [
     'password_too_many_bytes' => 'The :attribute field must be at most 72 bytes (non-ASCII characters take several bytes).',
     'password_blank' => 'The :attribute field must not consist only of whitespace or invisible characters.',
     'person_name_invisible' => 'The :attribute field must not contain control or invisible characters.',
+    'login_characters' => 'The :attribute field must not contain whitespace, control or invisible characters.',
     'break_overlap' => 'Breaks must not overlap.',
 
     'custom' => [
@@ -200,6 +201,7 @@ return [
         'status' => 'status',
         'page' => 'page',
         'per_page' => 'items per page',
+        'password_confirmation' => 'password confirmation',
         'password' => 'password',
         'shift_start' => 'shift start',
         'shift_end' => 'shift end',
