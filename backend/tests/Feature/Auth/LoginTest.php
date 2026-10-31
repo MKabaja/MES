@@ -225,3 +225,18 @@ it('keeps the password hash when it already uses the current cost', function ():
     $response->assertOk();
     expect($user->fresh()->password)->toBe($hashBeforeLogin);
 });
+
+it('binds the new session to the verified password hash so a later password change signs it out', function (): void {
+    $user = User::factory()->create(['login' => 'Jkowal']);
+    DB::table('users')->where('id', $user->id)->update(['password' => Hash::make('password', ['rounds' => 5])]);
+
+    $this->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password'])->assertOk();
+
+    $sessionData = session()->all();
+    expect($sessionData['password_hash_web'])->toBe(auth('web')->hashPasswordForCookie($user->fresh()->password));
+
+    DB::table('users')->where('id', $user->id)->update(['password' => Hash::make('changed-password')]);
+    auth()->forgetGuards();
+
+    $this->withSession($sessionData)->getJson(route('auth.me'))->assertUnauthorized();
+});
