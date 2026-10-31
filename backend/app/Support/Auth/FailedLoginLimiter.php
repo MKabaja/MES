@@ -14,6 +14,10 @@ final readonly class FailedLoginLimiter
 
     private const DECAY_SECONDS = 60;
 
+    private const MAX_FAILED_ATTEMPTS_PER_ACCOUNT = 10;
+
+    private const ACCOUNT_DECAY_SECONDS = 900;
+
     private const IPV6_NETWORK_PREFIX_BYTES = 8;
 
     public function __construct(private RateLimiter $limiter) {}
@@ -38,6 +42,33 @@ final readonly class FailedLoginLimiter
     public function releaseAttempt(string $ip): void
     {
         $this->limiter->decrement($this->keyFor($ip), self::DECAY_SECONDS);
+    }
+
+    /**
+     * Counts a login attempt against the account up front and rejects it once the account exceeds its failed attempts from outside the hall networks, whether or not the account exists.
+     *
+     * @throws ThrottleRequestsException
+     */
+    public function registerAccountAttempt(string $login): void
+    {
+        $key = $this->accountKeyFor($login);
+
+        if ($this->limiter->hit($key, self::ACCOUNT_DECAY_SECONDS) > self::MAX_FAILED_ATTEMPTS_PER_ACCOUNT) {
+            throw new ThrottleRequestsException(headers: ['Retry-After' => $this->limiter->availableIn($key)]);
+        }
+    }
+
+    /**
+     * Withdraws the registered attempt of the account after the login succeeded.
+     */
+    public function releaseAccountAttempt(string $login): void
+    {
+        $this->limiter->decrement($this->accountKeyFor($login), self::ACCOUNT_DECAY_SECONDS);
+    }
+
+    private function accountKeyFor(string $login): string
+    {
+        return 'login-account-failures|'.hash('sha256', mb_strtolower($login));
     }
 
     private function keyFor(string $ip): string

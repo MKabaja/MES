@@ -147,3 +147,54 @@ it('does not count correct passwords of workers outside the allowed networks tow
 
     $response->assertOk();
 });
+
+function allowHallNetwork(string $network): void
+{
+    $settings = resolve(SettingsRepository::class);
+    $current = $settings->current();
+    $settings->save(new PlantSettings(
+        shiftStart: $current->shiftStart,
+        shiftEnd: $current->shiftEnd,
+        breaks: $current->breaks,
+        deductBreaks: $current->deductBreaks,
+        autoPauseEnabled: $current->autoPauseEnabled,
+        workerBackdateDays: $current->workerBackdateDays,
+        stationIdleLogoutMinutes: $current->stationIdleLogoutMinutes,
+        workerNetworkRestrictionEnabled: false,
+        workerAllowedNetworks: [$network],
+    ));
+}
+
+function failLoginsOfAccountFromDifferentIps(string $login, string $ipPrefix, int $attempts): void
+{
+    foreach (range(1, $attempts) as $attempt) {
+        test()->withServerVariables(['REMOTE_ADDR' => "{$ipPrefix}.{$attempt}"])
+            ->postJson(route('auth.login'), ['login' => $login, 'password' => 'wrong-password'])
+            ->assertUnprocessable();
+    }
+}
+
+it('returns 429 on the eleventh failed attempt on one login from outside the hall network, even from another IP', function (): void {
+    freezeTime();
+    allowHallNetwork('192.168.1.0/24');
+    User::factory()->create(['login' => 'Jkowal']);
+    failLoginsOfAccountFromDifferentIps('JKowal', '10.0.0', 10);
+
+    $response = $this->withServerVariables(['REMOTE_ADDR' => '172.16.0.1'])
+        ->postJson(route('auth.login'), ['login' => 'jkowal', 'password' => 'password']);
+
+    $response->assertTooManyRequests()->assertHeader('Retry-After', '900');
+    $this->assertGuest('web');
+});
+
+it('does not lock an account because of failed attempts from the hall network', function (): void {
+    freezeTime();
+    allowHallNetwork('192.168.1.0/24');
+    User::factory()->create(['login' => 'Jkowal']);
+    failLoginsOfAccountFromDifferentIps('Jkowal', '192.168.1', 11);
+
+    $response = $this->withServerVariables(['REMOTE_ADDR' => '192.168.1.200'])
+        ->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password']);
+
+    $response->assertOk();
+});

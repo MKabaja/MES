@@ -24,10 +24,18 @@ final readonly class WorkerNetworkAccess
             return;
         }
 
-        $normalizedIp = IpAddress::unmapIpv4($ip);
-
-        if ($normalizedIp === '' || ! IpUtils::checkIp($normalizedIp, $settings->workerAllowedNetworks)) {
+        if (! $this->isInsideAllowedNetworks($ip, $settings)) {
             throw new DomainException(ErrorCode::NetworkNotAllowed);
         }
+    }
+
+    /**
+     * Tells whether the IP address lies inside one of the allowed networks, regardless of whether the restriction is enabled.
+     */
+    public function isInsideAllowedNetworks(string $ip, PlantSettings $settings): bool
+    {
+        $normalizedIp = IpAddress::unmapIpv4($ip);
+
+        return $normalizedIp !== '' && IpUtils::checkIp($normalizedIp, $settings->workerAllowedNetworks);
     }
 }
