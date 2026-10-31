@@ -266,3 +266,16 @@ it('retries after losing the race for the generated login and still creates the 
     $response->assertCreated()->assertJsonPath('data.login', 'Jkowal');
     expect($attempts)->toBe(2);
 });
+
+it('stores a password that looks like a bcrypt hash literally so the worker can sign in with it', function (): void {
+    $admin = User::factory()->admin()->create();
+    $hashLikePassword = '$2y$04$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234';
+
+    $created = $this->actingAs($admin, 'web')->postJson(route('users.store'), newWorkerPayload(['password' => $hashLikePassword]));
+    $created->assertCreated();
+    $reset = User::factory()->worker()->create();
+    $this->actingAs($admin, 'web')->postJson(route('users.reset_password', $reset->id), ['password' => $hashLikePassword])->assertNoContent();
+
+    expect(Hash::check($hashLikePassword, User::findOrFail($created->json('data.id'))->password))->toBeTrue()
+        ->and(Hash::check($hashLikePassword, $reset->refresh()->password))->toBeTrue();
+});

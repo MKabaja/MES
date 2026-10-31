@@ -7,6 +7,7 @@ namespace App\Actions\Users;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
 use App\Support\Session\UserSessions;
+use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
@@ -15,6 +16,7 @@ final readonly class ResetWorkerPasswordAction
     public function __construct(
         private AuditLogger $audit,
         private UserSessions $sessions,
+        private Hasher $hasher,
     ) {}
 
     /**
@@ -27,7 +29,7 @@ final readonly class ResetWorkerPasswordAction
         DB::transaction(function () use ($actor, $workerId, $password, $ip): void {
             $worker = User::query()->workers()->lockForUpdate()->findOrFail($workerId);
 
-            $worker->password = $password;
+            $worker->password = $this->hasher->make($password);
             $worker->save();
 
             $this->sessions->revokeAll($worker);

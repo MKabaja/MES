@@ -8,6 +8,7 @@ use App\Data\WorkerData;
 use App\Domain\Enums\Role;
 use App\Domain\Services\LoginGenerator;
 use App\Models\User;
+use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +16,7 @@ final readonly class CreateWorkerAction
 {
     private const int MAX_ATTEMPTS = 5;
 
-    public function __construct(private LoginGenerator $loginGenerator) {}
+    public function __construct(private LoginGenerator $loginGenerator, private Hasher $hasher) {}
 
     /**
      * Creates an active hall worker with a generated login, retrying with the next free login when a concurrent request takes it first.
@@ -49,7 +50,7 @@ final readonly class CreateWorkerAction
             'first_name' => $data->firstName,
             'last_name' => $data->lastName,
             'login' => $login,
-            'password' => $data->password,
+            'password' => $this->hasher->make($data->password),
             'role' => Role::Worker,
             'is_active' => true,
         ]);
