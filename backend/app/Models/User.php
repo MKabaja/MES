@@ -40,6 +40,15 @@ class User extends Authenticatable
      * @param  Builder<User>  $query
      */
     #[Scope]
+    protected function whereLoginIs(Builder $query, string $login): void
+    {
+        $query->whereRaw('lower(login) = lower(?)', [$login]);
+    }
+
+    /**
+     * @param  Builder<User>  $query
+     */
+    #[Scope]
     protected function workers(Builder $query): void
     {
         $query->where('role', Role::Worker);

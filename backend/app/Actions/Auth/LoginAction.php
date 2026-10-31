@@ -16,7 +16,6 @@ use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 final readonly class LoginAction
 {
@@ -41,7 +40,7 @@ final readonly class LoginAction
         $this->failedLoginLimiter->registerAttempt($ip);
 
         $user = User::query()
-            ->whereRaw('lower(login) = ?', [Str::lower($credentials->login)])
+            ->whereLoginIs($credentials->login)
             ->first();
 
         $dummyHash = $this->dummyPasswordHash->value();

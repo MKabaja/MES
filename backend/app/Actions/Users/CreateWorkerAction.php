@@ -43,7 +43,7 @@ final readonly class CreateWorkerAction
         $login = $this->loginGenerator->generate(
             $data->firstName,
             $data->lastName,
-            fn (string $candidate): bool => User::query()->whereRaw('lower(login) = ?', [mb_strtolower($candidate)])->exists(),
+            fn (string $candidate): bool => User::query()->whereLoginIs($candidate)->exists(),
         );
 
         return User::create([
