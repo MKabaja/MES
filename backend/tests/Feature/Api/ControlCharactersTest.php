@@ -59,3 +59,9 @@ it('accepts tab, line feed and carriage return in input values', function (): vo
 
     $response->assertOk();
 });
+
+it('adds CORS headers to the 400 response for an allowed origin', function (): void {
+    $response = $this->postJson(route('auth.login'), ['login' => "Jkowal\0", 'password' => 'password']);
+
+    $response->assertBadRequest()->assertHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+});
