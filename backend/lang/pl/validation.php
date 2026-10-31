@@ -161,6 +161,9 @@ return [
 
     'network' => 'Pole :attribute musi być adresem IPv4 lub IPv6 albo zakresem CIDR.',
     'network_too_broad' => 'Pole :attribute nie może obejmować wszystkich adresów (prefiks 0).',
+    'person_name' => 'Pole :attribute musi zawierać co najmniej jedną literę.',
+    'password_too_many_bytes' => 'Pole :attribute może mieć najwyżej 72 bajty (znaki spoza ASCII zajmują kilka bajtów).',
+    'password_blank' => 'Pole :attribute nie może składać się wyłącznie z białych znaków.',
     'break_overlap' => 'Przerwy nie mogą się nakładać.',
 
     'custom' => [
@@ -188,6 +191,13 @@ return [
 
     'attributes' => [
         'login' => 'login',
+        'first_name' => 'imię',
+        'last_name' => 'nazwisko',
+        'is_active' => 'aktywność konta',
+        'search' => 'fraza wyszukiwania',
+        'status' => 'status',
+        'page' => 'strona',
+        'per_page' => 'liczba na stronie',
         'password' => 'hasło',
         'shift_start' => 'początek zmiany',
         'shift_end' => 'koniec zmiany',

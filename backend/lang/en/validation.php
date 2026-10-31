@@ -162,6 +162,9 @@ return [
 
     'network' => 'The :attribute field must be an IPv4 or IPv6 address or a CIDR range.',
     'network_too_broad' => 'The :attribute field must not cover every address (prefix 0).',
+    'person_name' => 'The :attribute field must contain at least one letter.',
+    'password_too_many_bytes' => 'The :attribute field must be at most 72 bytes (non-ASCII characters take several bytes).',
+    'password_blank' => 'The :attribute field must not consist only of whitespace.',
     'break_overlap' => 'Breaks must not overlap.',
 
     'custom' => [
@@ -189,6 +192,13 @@ return [
 
     'attributes' => [
         'login' => 'login',
+        'first_name' => 'first name',
+        'last_name' => 'last name',
+        'is_active' => 'account activity',
+        'search' => 'search phrase',
+        'status' => 'status',
+        'page' => 'page',
+        'per_page' => 'items per page',
         'password' => 'password',
         'shift_start' => 'shift start',
         'shift_end' => 'shift end',
