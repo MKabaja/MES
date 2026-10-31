@@ -164,7 +164,8 @@ return [
     'network_too_broad' => 'The :attribute field must not cover every address (prefix 0).',
     'person_name' => 'The :attribute field must contain at least one letter.',
     'password_too_many_bytes' => 'The :attribute field must be at most 72 bytes (non-ASCII characters take several bytes).',
-    'password_blank' => 'The :attribute field must not consist only of whitespace.',
+    'password_blank' => 'The :attribute field must not consist only of whitespace or invisible characters.',
+    'person_name_invisible' => 'The :attribute field must not contain control or invisible characters.',
     'break_overlap' => 'Breaks must not overlap.',
 
     'custom' => [
