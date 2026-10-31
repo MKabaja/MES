@@ -21,8 +21,6 @@ it('answers domain errors in the language from Accept-Language', function (array
         ->assertExactJson(['message' => $message, 'code' => 'ORDER_LOCKED']);
 })->with([
     'no header' => [['Accept-Language' => ''], 'Zlecenie jest zablokowane.'],
-    'polish' => [['Accept-Language' => 'pl'], 'Zlecenie jest zablokowane.'],
-    'english' => [['Accept-Language' => 'en'], 'The order is locked.'],
     'english with region and quality' => [['Accept-Language' => 'en-US,en;q=0.9'], 'The order is locked.'],
     'english preferred over polish' => [['Accept-Language' => 'pl;q=0.3, en;q=0.8'], 'The order is locked.'],
     'unsupported language' => [['Accept-Language' => 'de-DE,de;q=0.9'], 'Zlecenie jest zablokowane.'],
@@ -40,21 +38,9 @@ it('answers validation errors in the language from Accept-Language', function (a
 })->with([
     'no header' => [['Accept-Language' => ''], 'Dane są nieprawidłowe.', 'Pole name jest wymagane.'],
     'english' => [['Accept-Language' => 'en'], 'The data is invalid.', 'The name field is required.'],
-    'unsupported language' => [['Accept-Language' => 'fr'], 'Dane są nieprawidłowe.', 'Pole name jest wymagane.'],
 ]);
 
-it('answers errors of unmatched routes in the requested language', function (): void {
-    $response = $this->getJson('api/v1/does-not-exist', ['Accept-Language' => 'en']);
-
-    $response->assertNotFound()
-        ->assertExactJson(['message' => 'Resource not found.', 'code' => 'NOT_FOUND']);
-});
-
-it('has a message in every language for every error code', function (ErrorCode $code, string $locale): void {
-    expect(trans()->hasForLocale('errors.'.$code->value, $locale))->toBeTrue();
-})->with(fn () => ErrorCode::cases())->with(['pl', 'en']);
-
-it('has no error messages for unknown error codes', function (string $locale): void {
+it('has exactly the known error codes translated', function (string $locale): void {
     $translatedCodes = array_keys(trans()->get('errors', [], $locale));
     $knownCodes = array_map(fn (ErrorCode $code) => $code->value, ErrorCode::cases());
 

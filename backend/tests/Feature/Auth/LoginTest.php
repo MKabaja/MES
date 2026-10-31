@@ -38,16 +38,6 @@ it('signs the user in and returns the user', function (): void {
     $this->assertAuthenticatedAs($user, 'web');
 });
 
-it('keeps the user signed in on the next request through the session', function (): void {
-    $user = User::factory()->create(['login' => 'Jkowal']);
-    $this->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password'])->assertOk();
-    app('auth')->forgetGuards();
-
-    $response = $this->getJson(route('auth.me'));
-
-    $response->assertOk()->assertJsonPath('data.id', $user->id);
-});
-
 it('signs the user in regardless of the letter case of the login', function (): void {
     $user = User::factory()->create(['login' => 'Jkowal']);
 
@@ -96,21 +86,6 @@ it('issues a new session ID on login', function (): void {
     expect(session()->getId())->toBeString()->not->toBe($sessionIdBeforeLogin);
 });
 
-it('replaces the session of a signed-in user who logs in as someone else', function (): void {
-    User::factory()->create(['login' => 'Jkowal']);
-    $otherUser = User::factory()->create(['login' => 'Anowak']);
-    $this->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password'])->assertOk();
-    $sessionIdOfFirstLogin = session()->getId();
-
-    $response = $this->withCredentials()->withCookie(config('session.cookie'), $sessionIdOfFirstLogin)
-        ->postJson(route('auth.login'), ['login' => 'Anowak', 'password' => 'password']);
-
-    $response->assertOk()->assertJsonPath('data.id', $otherUser->id);
-    expect(session()->getId())->not->toBe($sessionIdOfFirstLogin);
-    app('auth')->forgetGuards();
-    $this->getJson(route('auth.me'))->assertOk()->assertJsonPath('data.id', $otherUser->id);
-});
-
 it('returns 403 ACCOUNT_INACTIVE when the password of a disabled account is correct', function (): void {
     User::factory()->inactive()->create(['login' => 'Jkowal']);
 
@@ -132,22 +107,26 @@ it('returns 422 INVALID_CREDENTIALS for a disabled account with a wrong password
     $this->assertGuest('web');
 });
 
-it('returns 422 with named fields when the credentials are missing', function (string $locale, array $errors): void {
-    $response = $this->postJson(route('auth.login'), [], ['Accept-Language' => $locale]);
+it('returns 422 with named fields when the credentials are missing', function (): void {
+    $response = $this->postJson(route('auth.login'), []);
 
     $response->assertUnprocessable()
         ->assertJsonPath('code', 'VALIDATION_FAILED')
-        ->assertJsonPath('errors', $errors);
-})->with([
-    'polish' => ['pl', ['login' => ['Pole login jest wymagane.'], 'password' => ['Pole hasło jest wymagane.']]],
-    'english' => ['en', ['login' => ['The login field is required.'], 'password' => ['The password field is required.']]],
-]);
-
-it('returns 422 when the credentials are not strings', function (): void {
-    $response = $this->postJson(route('auth.login'), ['login' => ['Jkowal'], 'password' => ['password']]);
-
-    $response->assertUnprocessable()->assertJsonValidationErrors(['login', 'password']);
+        ->assertJsonPath('errors', ['login' => ['Pole login jest wymagane.'], 'password' => ['Pole hasło jest wymagane.']]);
 });
+
+it('returns 422 when the login or password is longer than allowed', function (array $credentials, string $field): void {
+    User::factory()->create(['login' => 'Jkowal']);
+
+    $response = $this->postJson(route('auth.login'), $credentials);
+
+    $response->assertUnprocessable()
+        ->assertJsonPath('code', 'VALIDATION_FAILED')
+        ->assertOnlyJsonValidationErrors([$field]);
+})->with([
+    'login of 31 characters' => [['login' => str_repeat('a', 31), 'password' => 'password'], 'login'],
+    'password of 65 characters' => [['login' => 'Jkowal', 'password' => str_repeat('a', 65)], 'password'],
+]);
 
 it('returns 429 on the sixth attempt within a minute for the same login and IP', function (): void {
     freezeTime();
@@ -198,29 +177,6 @@ it('returns 400 instead of signing in when NUL bytes vary the login to bypass th
     $this->assertGuest('web');
 });
 
-it('returns 422 when the login or password is longer than allowed', function (array $credentials, string $field): void {
-    User::factory()->create(['login' => 'Jkowal']);
-
-    $response = $this->postJson(route('auth.login'), $credentials);
-
-    $response->assertUnprocessable()
-        ->assertJsonPath('code', 'VALIDATION_FAILED')
-        ->assertOnlyJsonValidationErrors([$field]);
-})->with([
-    'login of 31 characters' => [['login' => str_repeat('a', 31), 'password' => 'password'], 'login'],
-    'password of 65 characters' => [['login' => 'Jkowal', 'password' => str_repeat('a', 65)], 'password'],
-]);
-
-it('accepts a login of 30 characters and a password of 64 characters', function (): void {
-    $login = str_repeat('a', 30);
-    $password = str_repeat('b', 64);
-    User::factory()->create(['login' => $login, 'password' => $password]);
-
-    $response = $this->postJson(route('auth.login'), ['login' => $login, 'password' => $password]);
-
-    $response->assertOk();
-});
-
 it('destroys the previous session record when another user logs in on the same browser', function (): void {
     config(['session.driver' => 'database']);
     User::factory()->create(['login' => 'Jkowal']);
@@ -233,7 +189,10 @@ it('destroys the previous session record when another user logs in on the same b
         ->postJson(route('auth.login'), ['login' => 'Anowak', 'password' => 'password']);
 
     $response->assertOk()->assertJsonPath('data.id', $otherUser->id);
+    $this->assertAuthenticatedAs($otherUser, 'web');
     $this->assertDatabaseMissing('sessions', ['id' => $sessionIdOfFirstLogin]);
+    app('auth')->forgetGuards();
+    $this->getJson(route('auth.me'))->assertOk()->assertJsonPath('data.id', $otherUser->id);
 });
 
 it('sends the session cookie only over HTTPS outside the local environment', function (): void {

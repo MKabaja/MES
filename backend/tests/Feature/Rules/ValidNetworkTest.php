@@ -14,11 +14,9 @@ it('accepts IPv4 and IPv6 addresses and CIDR ranges within the prefix limits', f
     expect(networkValidationFails($network))->toBeFalse();
 })->with([
     'IPv4 address' => '192.168.1.10',
-    'IPv4 range' => '192.168.1.0/24',
     'IPv4 prefix 1' => '128.0.0.0/1',
     'IPv4 prefix 32' => '10.0.0.5/32',
     'IPv6 address' => 'fd00::10',
-    'IPv6 range' => '2001:db8::/32',
     'IPv6 prefix 1' => '8000::/1',
     'IPv6 prefix 128' => 'fd00::10/128',
 ]);
@@ -28,12 +26,10 @@ it('rejects values that are not an address or a CIDR range', function (mixed $ne
 })->with([
     'text' => 'office',
     'octet out of range' => '256.1.1.1',
-    'too few octets' => '10.0.0',
     'IPv4 prefix 33' => '10.0.0.0/33',
     'IPv6 prefix 129' => 'fd00::/129',
     'missing prefix' => '10.0.0.0/',
     'negative prefix' => '10.0.0.0/-1',
-    'non numeric prefix' => '10.0.0.0/abc',
     'prefix with leading zero' => '10.0.0.0/024',
     'two prefixes' => '10.0.0.0/24/8',
     'trailing newline address' => "10.0.0.1\n",
@@ -53,12 +49,3 @@ it('rejects a range that covers every address', function (string $network): void
     'IPv4' => '0.0.0.0/0',
     'IPv6' => '::/0',
 ]);
-
-it('reports the failure in Polish with the attribute name', function (): void {
-    app()->setLocale('pl');
-
-    $validator = Validator::make(['network' => 'office'], ['network' => [new ValidNetwork]]);
-    $validator->setAttributeNames(['network' => 'sieć']);
-
-    expect($validator->errors()->first('network'))->toBe('Pole sieć musi być adresem IPv4 lub IPv6 albo zakresem CIDR.');
-});

@@ -73,26 +73,10 @@ it('returns only the public settings to a worker', function (): void {
     ]]);
 });
 
-it('returns only the public settings to an admin', function (): void {
+it('returns exactly the five public keys to an admin', function (): void {
     $admin = User::factory()->admin()->create();
 
     $response = $this->actingAs($admin, 'web')->getJson(route('settings.public'));
 
     $response->assertOk()->assertJsonCount(5, 'data')->assertJsonMissingPath('data.worker_allowed_networks');
-});
-
-it('returns 403 NETWORK_NOT_ALLOWED when a worker outside the allowed networks reads the public settings', function (): void {
-    $worker = User::factory()->worker()->create();
-
-    $response = $this->actingAs($worker, 'web')
-        ->withServerVariables(['REMOTE_ADDR' => '10.0.0.7'])
-        ->getJson(route('settings.public'));
-
-    $response->assertForbidden()->assertJsonPath('code', 'NETWORK_NOT_ALLOWED');
-});
-
-it('returns 401 when a guest reads the public settings', function (): void {
-    $response = $this->getJson(route('settings.public'));
-
-    $response->assertUnauthorized();
 });

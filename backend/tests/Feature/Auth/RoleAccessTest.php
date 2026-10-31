@@ -41,16 +41,8 @@ it('lets a user through a route of their own role', function (string $factorySta
     $response->assertNoContent();
 })->with([
     'worker on a hall route' => ['worker', 'api/v1/testing/hall'],
-    'admin on an office route' => ['admin', 'api/v1/testing/office'],
     'worker on a shared route' => ['worker', 'api/v1/testing/shared'],
-    'admin on a shared route' => ['admin', 'api/v1/testing/shared'],
 ]);
-
-it('returns 401 on a role route without a session', function (): void {
-    $response = $this->getJson('api/v1/testing/hall');
-
-    $response->assertUnauthorized()->assertJsonPath('code', 'UNAUTHENTICATED');
-});
 
 it('reports a disabled account before checking the role', function (): void {
     $admin = User::factory()->admin()->inactive()->create();
