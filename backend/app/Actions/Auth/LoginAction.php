@@ -7,7 +7,9 @@ namespace App\Actions\Auth;
 use App\Data\LoginData;
 use App\Domain\Enums\ErrorCode;
 use App\Domain\Exceptions\DomainException;
+use App\Domain\Services\WorkerNetworkAccess;
 use App\Models\User;
+use App\Repositories\SettingsRepository;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Contracts\Session\Session;
@@ -20,14 +22,16 @@ final class LoginAction
     public function __construct(
         private readonly StatefulGuard $guard,
         private readonly Hasher $hasher,
+        private readonly WorkerNetworkAccess $networkAccess,
+        private readonly SettingsRepository $settings,
     ) {}
 
     /**
-     * Signs the user in with a case-insensitive login and starts a fresh session.
+     * Signs the user in with a case-insensitive login from an allowed network and starts a fresh session.
      *
-     * @throws DomainException INVALID_CREDENTIALS for an unknown login or a wrong password, ACCOUNT_INACTIVE for a disabled account
+     * @throws DomainException INVALID_CREDENTIALS for an unknown login or a wrong password, ACCOUNT_INACTIVE for a disabled account, NETWORK_NOT_ALLOWED for a non-admin outside the allowed networks
      */
-    public function handle(LoginData $credentials, Session $session): User
+    public function handle(LoginData $credentials, string $ip, Session $session): User
     {
         $user = User::query()
             ->whereRaw('lower(login) = ?', [Str::lower($credentials->login)])
@@ -42,6 +46,8 @@ final class LoginAction
         if (! $user->is_active) {
             throw new DomainException(ErrorCode::AccountInactive);
         }
+
+        $this->networkAccess->assertAllowed($user, $ip, $this->settings->current());
 
         $this->guard->login($user);
         $session->regenerate();

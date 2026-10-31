@@ -16,7 +16,7 @@ return [
     'SERVICE_UNAVAILABLE' => 'Usługa jest chwilowo niedostępna.',
     'INVALID_CREDENTIALS' => 'Nieprawidłowy login lub hasło.',
     'ACCOUNT_INACTIVE' => 'Konto jest nieaktywne.',
-    'NETWORK_NOT_ALLOWED' => 'Logowanie z tej sieci jest niedozwolone.',
+    'NETWORK_NOT_ALLOWED' => 'Dostęp z tej sieci jest niedozwolony.',
     'CODE_NOT_FOUND' => 'Nie znaleziono pozycji o podanym kodzie.',
     'ORDER_NOT_DRAFT' => 'Zlecenie nie jest już szkicem.',
     'ORDER_HAS_NO_POSITIONS' => 'Zlecenie nie ma żadnej pozycji.',

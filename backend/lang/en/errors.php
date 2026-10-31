@@ -16,7 +16,7 @@ return [
     'SERVICE_UNAVAILABLE' => 'The service is temporarily unavailable.',
     'INVALID_CREDENTIALS' => 'Invalid login or password.',
     'ACCOUNT_INACTIVE' => 'The account is inactive.',
-    'NETWORK_NOT_ALLOWED' => 'Signing in from this network is not allowed.',
+    'NETWORK_NOT_ALLOWED' => 'Access from this network is not allowed.',
     'CODE_NOT_FOUND' => 'No position found for the given code.',
     'ORDER_NOT_DRAFT' => 'The order is no longer a draft.',
     'ORDER_HAS_NO_POSITIONS' => 'The order has no positions.',

@@ -10,8 +10,11 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:login')
         ->name('auth.login');
 
-    Route::middleware('auth:sanctum')->group(function (): void {
-        Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+    Route::post('auth/logout', [AuthController::class, 'logout'])
+        ->middleware(['auth:sanctum', 'active'])
+        ->name('auth.logout');
+
+    Route::middleware(['auth:sanctum', 'active', 'network'])->group(function (): void {
         Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
     });
 });
