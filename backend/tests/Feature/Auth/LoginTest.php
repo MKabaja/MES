@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use App\Support\Auth\DummyPasswordHash;
 use Illuminate\Contracts\Hashing\Hasher;
 
 use function Pest\Laravel\freezeTime;
@@ -70,14 +71,15 @@ it('returns 422 with the same error for an unknown login and a wrong password', 
     'wrong password' => [['login' => 'Jkowal', 'password' => 'wrong-password']],
 ]);
 
-it('still checks a password hash when the login does not exist', function (): void {
+it('checks the password against the cached dummy hash without hashing when the login does not exist', function (): void {
+    $dummyHash = app(DummyPasswordHash::class)->value();
     $hasher = $this->spy(Hasher::class);
-    $hasher->shouldReceive('make')->andReturn('dummy-hash');
 
     $response = $this->postJson(route('auth.login'), ['login' => 'Anowak', 'password' => 'password']);
 
     $response->assertUnprocessable()->assertJsonPath('code', 'INVALID_CREDENTIALS');
-    $hasher->shouldHaveReceived('check')->once()->with('password', Mockery::type('string'));
+    $hasher->shouldHaveReceived('check')->once()->with('password', $dummyHash);
+    $hasher->shouldNotHaveReceived('make');
 });
 
 it('issues a new session ID on login', function (): void {
