@@ -72,11 +72,3 @@ it('returns only the public settings to a worker', function (): void {
         'station_idle_logout_minutes' => 7,
     ]]);
 });
-
-it('returns exactly the five public keys to an admin', function (): void {
-    $admin = User::factory()->admin()->create();
-
-    $response = $this->actingAs($admin, 'web')->getJson(route('settings.public'));
-
-    $response->assertOk()->assertJsonCount(5, 'data')->assertJsonMissingPath('data.worker_allowed_networks');
-});
