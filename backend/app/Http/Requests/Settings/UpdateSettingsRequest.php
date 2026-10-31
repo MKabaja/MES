@@ -7,14 +7,15 @@ namespace App\Http\Requests\Settings;
 use App\Data\SettingsData;
 use App\Domain\ValueObjects\BreakWindow;
 use App\Domain\ValueObjects\PlantSettings;
-use App\Models\User;
+use App\Http\Requests\Concerns\ResolvesActor;
 use App\Rules\ValidNetwork;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSettingsRequest extends FormRequest
 {
+    use ResolvesActor;
+
     /**
      * @return array<string, list<mixed>>
      */
@@ -61,22 +62,6 @@ class UpdateSettingsRequest extends FormRequest
 
             $this->rejectOverlappingBreaks($validator);
         }];
-    }
-
-    /**
-     * Returns the signed-in user performing the update.
-     *
-     * @throws AuthenticationException
-     */
-    public function actor(): User
-    {
-        $user = $this->user();
-
-        if (! $user instanceof User) {
-            throw new AuthenticationException;
-        }
-
-        return $user;
     }
 
     /**

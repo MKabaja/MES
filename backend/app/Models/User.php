@@ -8,6 +8,8 @@ use App\Domain\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -32,6 +34,15 @@ class User extends Authenticatable
     public function isWorker(): bool
     {
         return $this->role === Role::Worker;
+    }
+
+    /**
+     * @param  Builder<User>  $query
+     */
+    #[Scope]
+    protected function workers(Builder $query): void
+    {
+        $query->where('role', Role::Worker);
     }
 
     /**
