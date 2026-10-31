@@ -19,7 +19,7 @@ return new class extends Migration
             $table->jsonb('before')->nullable();
             $table->jsonb('after')->nullable();
             $table->string('ip', 45)->nullable();
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestampTz('created_at')->useCurrent();
 
             $table->index(['subject_type', 'subject_id']);
         });

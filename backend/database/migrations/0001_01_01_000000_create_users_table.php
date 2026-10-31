@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('role', 10)->index();
             $table->boolean('is_active')->default(true);
             $table->rememberToken();
-            $table->timestamps();
+            $table->timestampsTz();
         });
 
         DB::statement('CREATE UNIQUE INDEX users_login_lower_unique ON users (lower(login))');
