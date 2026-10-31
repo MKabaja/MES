@@ -95,18 +95,19 @@ it('returns 403 when a worker lists accounts', function (): void {
     $response->assertForbidden()->assertJsonPath('code', 'FORBIDDEN');
 });
 
-it('lists active workers sorted by surname with only id, full name and login, for both roles', function (string $role): void {
+it('lists active workers sorted by surname with the login visible only to the admin', function (string $role): void {
     $caller = User::factory()->{$role}()->create(['first_name' => 'Ewa', 'last_name' => 'Zielińska', 'login' => 'Ezieli']);
     $kowalski = User::factory()->create(['first_name' => 'Jan', 'last_name' => 'Kowalski', 'login' => 'Jkowal']);
     $adamski = User::factory()->create(['first_name' => 'Zenon', 'last_name' => 'Adamski', 'login' => 'Zadams']);
     User::factory()->inactive()->create();
+    $loginOf = fn (string $login): array => $role === 'admin' ? ['login' => $login] : [];
 
     $response = $this->actingAs($caller, 'web')->getJson(route('workers.index'));
 
     $response->assertOk()->assertExactJson(['data' => [
-        ['id' => $adamski->id, 'full_name' => 'Zenon Adamski', 'login' => 'Zadams'],
-        ['id' => $kowalski->id, 'full_name' => 'Jan Kowalski', 'login' => 'Jkowal'],
-        ...($role === 'worker' ? [['id' => $caller->id, 'full_name' => 'Ewa Zielińska', 'login' => 'Ezieli']] : []),
+        ['id' => $adamski->id, 'full_name' => 'Zenon Adamski', ...$loginOf('Zadams')],
+        ['id' => $kowalski->id, 'full_name' => 'Jan Kowalski', ...$loginOf('Jkowal')],
+        ...($role === 'worker' ? [['id' => $caller->id, 'full_name' => 'Ewa Zielińska', ...$loginOf('Ezieli')]] : []),
     ]]);
 })->with(['admin', 'worker']);
 
