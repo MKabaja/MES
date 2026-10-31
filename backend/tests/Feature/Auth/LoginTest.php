@@ -203,6 +203,18 @@ it('destroys the previous session record when another user logs in on the same b
     $this->getJson(route('auth.me'))->assertOk()->assertJsonPath('data.id', $otherUser->id);
 });
 
+it('does not carry session data of the previous account over to the next login', function (): void {
+    User::factory()->create(['login' => 'Anowak']);
+
+    $response = $this->withSession(['previous_account_data' => 'secret'])
+        ->postJson(route('auth.login'), ['login' => 'Anowak', 'password' => 'password']);
+
+    $response->assertOk();
+    expect(session()->has('previous_account_data'))->toBeFalse()
+        ->and(session()->token())->not->toBeEmpty();
+    $response->assertCookie('XSRF-TOKEN');
+});
+
 it('sends the session cookie only over HTTPS outside the local environment', function (): void {
     User::factory()->create(['login' => 'Jkowal']);
 
