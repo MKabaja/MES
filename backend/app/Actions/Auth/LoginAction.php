@@ -10,20 +10,20 @@ use App\Domain\Exceptions\DomainException;
 use App\Domain\Services\WorkerNetworkAccess;
 use App\Models\User;
 use App\Repositories\SettingsRepository;
+use App\Support\Auth\DummyPasswordHash;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Support\Str;
 
-final class LoginAction
+final readonly class LoginAction
 {
-    private static ?string $dummyHash = null;
-
     public function __construct(
-        private readonly StatefulGuard $guard,
-        private readonly Hasher $hasher,
-        private readonly WorkerNetworkAccess $networkAccess,
-        private readonly SettingsRepository $settings,
+        private StatefulGuard $guard,
+        private Hasher $hasher,
+        private DummyPasswordHash $dummyPasswordHash,
+        private WorkerNetworkAccess $networkAccess,
+        private SettingsRepository $settings,
     ) {}
 
     /**
@@ -37,7 +37,8 @@ final class LoginAction
             ->whereRaw('lower(login) = ?', [Str::lower($credentials->login)])
             ->first();
 
-        $isPasswordValid = $this->hasher->check($credentials->password, $user->password ?? $this->dummyHash());
+        $dummyHash = $this->dummyPasswordHash->value();
+        $isPasswordValid = $this->hasher->check($credentials->password, $user->password ?? $dummyHash);
 
         if ($user === null || ! $isPasswordValid) {
             throw new DomainException(ErrorCode::InvalidCredentials, field: 'login');
@@ -53,10 +54,5 @@ final class LoginAction
         $session->regenerate();
 
         return $user;
-    }
-
-    private function dummyHash(): string
-    {
-        return self::$dummyHash ??= $this->hasher->make(Str::random(40));
     }
 }
