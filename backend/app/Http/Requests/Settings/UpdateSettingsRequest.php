@@ -61,6 +61,7 @@ class UpdateSettingsRequest extends FormRequest
             }
 
             $this->rejectOverlappingBreaks($validator);
+            $this->rejectEquivalentNetworks($validator);
         }];
     }
 
@@ -90,6 +91,27 @@ class UpdateSettingsRequest extends FormRequest
                 $this->array('worker_allowed_networks'),
             )),
         );
+    }
+
+    private function rejectEquivalentNetworks(ValidatorContract $validator): void
+    {
+        $seenNetworks = [];
+        foreach ($this->array('worker_allowed_networks') as $index => $network) {
+            $canonicalNetwork = $this->canonicalNetwork((string) $network);
+
+            if (in_array($canonicalNetwork, $seenNetworks, true)) {
+                $validator->errors()->add("worker_allowed_networks.{$index}", __('validation.custom.worker_allowed_networks.*.distinct'));
+            }
+            $seenNetworks[] = $canonicalNetwork;
+        }
+    }
+
+    private function canonicalNetwork(string $network): string
+    {
+        $parts = explode('/', $network);
+        $packedAddress = (string) inet_pton($parts[0]);
+
+        return inet_ntop($packedAddress).'/'.($parts[1] ?? (string) (strlen($packedAddress) * 8));
     }
 
     private function rejectOverlappingBreaks(ValidatorContract $validator): void
