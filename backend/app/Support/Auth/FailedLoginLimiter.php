@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Auth;
 
+use App\Support\Network\IpAddress;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 
@@ -14,8 +15,6 @@ final readonly class FailedLoginLimiter
     private const DECAY_SECONDS = 60;
 
     private const IPV6_NETWORK_PREFIX_BYTES = 8;
-
-    private const IPV4_MAPPED_PREFIX = "\0\0\0\0\0\0\0\0\0\0\xFF\xFF";
 
     public function __construct(private RateLimiter $limiter) {}
 
@@ -48,17 +47,13 @@ final readonly class FailedLoginLimiter
 
     private function networkOf(string $ip): string
     {
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) === false) {
-            return $ip;
+        $unmappedIp = IpAddress::unmapIpv4($ip);
+
+        if (filter_var($unmappedIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) === false) {
+            return $unmappedIp;
         }
 
-        $packedAddress = (string) inet_pton($ip);
-
-        if (str_starts_with($packedAddress, self::IPV4_MAPPED_PREFIX)) {
-            return (string) inet_ntop(substr($packedAddress, strlen(self::IPV4_MAPPED_PREFIX)));
-        }
-
-        $networkAddress = str_pad(substr($packedAddress, 0, self::IPV6_NETWORK_PREFIX_BYTES), 16, "\0");
+        $networkAddress = str_pad(substr((string) inet_pton($unmappedIp), 0, self::IPV6_NETWORK_PREFIX_BYTES), 16, "\0");
 
         return inet_ntop($networkAddress).'/64';
     }
