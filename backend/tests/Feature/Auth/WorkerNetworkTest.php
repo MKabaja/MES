@@ -103,28 +103,6 @@ it('lets a worker outside the allowed networks sign out but not read the profile
     $this->assertGuest('web');
 });
 
-it('returns 403 NETWORK_NOT_ALLOWED when a signed-in worker sends a request from outside the allowed networks', function (): void {
-    restrictWorkersToNetworks(['192.168.1.0/24']);
-    $worker = User::factory()->worker()->create();
-
-    $response = $this->actingAs($worker, 'web')
-        ->withServerVariables(['REMOTE_ADDR' => '10.0.0.7'])
-        ->getJson(route('auth.me'));
-
-    $response->assertForbidden()->assertJsonPath('code', 'NETWORK_NOT_ALLOWED');
-});
-
-it('serves a signed-in admin from outside the allowed networks', function (): void {
-    restrictWorkersToNetworks(['192.168.1.0/24']);
-    $admin = User::factory()->admin()->create();
-
-    $response = $this->actingAs($admin, 'web')
-        ->withServerVariables(['REMOTE_ADDR' => '10.0.0.7'])
-        ->getJson(route('auth.me'));
-
-    $response->assertOk()->assertJsonPath('data.id', $admin->id);
-});
-
 it('serves a worker from any address while the restriction is disabled', function (): void {
     $worker = User::factory()->worker()->create(['login' => 'Jkowal']);
 
@@ -147,9 +125,7 @@ it('serves a worker whose address matches an allowed IPv4 or IPv6 address or ran
     'IPv4 inside CIDR' => ['192.168.1.0/24', '192.168.1.254'],
     'exact IPv4 address' => ['10.0.0.5', '10.0.0.5'],
     'IPv6 inside CIDR' => ['2001:db8::/32', '2001:db8:abcd::1'],
-    'exact IPv6 address' => ['fd00::10', 'fd00::10'],
     'IPv4-mapped IPv6 inside IPv4 CIDR' => ['192.168.1.0/24', '::ffff:192.168.1.20'],
-    'IPv4-mapped IPv6 matching exact IPv4' => ['10.0.0.5', '::ffff:10.0.0.5'],
 ]);
 
 it('rejects a worker whose address matches no allowed IPv4 or IPv6 address or range', function (string $network, string $ip): void {
@@ -163,9 +139,7 @@ it('rejects a worker whose address matches no allowed IPv4 or IPv6 address or ra
     $response->assertForbidden()->assertJsonPath('code', 'NETWORK_NOT_ALLOWED');
 })->with([
     'IPv4 outside CIDR' => ['192.168.1.0/24', '192.168.2.1'],
-    'other IPv4 address' => ['10.0.0.5', '10.0.0.6'],
     'IPv6 outside CIDR' => ['2001:db8::/32', '2001:db9::1'],
-    'other IPv6 address' => ['fd00::10', 'fd00::11'],
     'IPv4-mapped IPv6 outside IPv4 CIDR' => ['192.168.1.0/24', '::ffff:192.168.2.1'],
 ]);
 

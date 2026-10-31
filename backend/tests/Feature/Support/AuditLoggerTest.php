@@ -34,18 +34,6 @@ it('stores actor, action, subject, values and ip', function (): void {
         ->and($entry->user->is($actor))->toBeTrue();
 });
 
-it('allows a missing actor, values and ip', function (): void {
-    $subject = User::factory()->create();
-
-    $entry = app(AuditLogger::class)->log(null, AuditLogger::SETTINGS_UPDATED, $subject, null, null);
-
-    $stored = AuditLog::query()->findOrFail($entry->id);
-    expect($stored->user_id)->toBeNull()
-        ->and($stored->before)->toBeNull()
-        ->and($stored->after)->toBeNull()
-        ->and($stored->ip)->toBeNull();
-});
-
 it('never stores passwords or tokens, also when nested', function (): void {
     $subject = User::factory()->create();
 

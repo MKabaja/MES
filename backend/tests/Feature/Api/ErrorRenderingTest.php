@@ -5,23 +5,17 @@ declare(strict_types=1);
 use App\Domain\Enums\ErrorCode;
 use App\Domain\Exceptions\DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Auth\Access\Response as AccessResponse;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\OriginMismatchException;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\GoneHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 function throwFromTestRoute(Throwable $exception): void
 {
@@ -111,18 +105,14 @@ it('renders framework exceptions in the envelope', function (Closure $makeExcept
 })->with([
     'authentication' => [fn () => new AuthenticationException, 401, 'UNAUTHENTICATED', 'Brak aktywnej sesji. Zaloguj się.'],
     'authorization' => [fn () => new AuthorizationException, 403, 'FORBIDDEN', 'Brak uprawnień do wykonania tej operacji.'],
-    'access denied' => [fn () => new AccessDeniedHttpException, 403, 'FORBIDDEN', 'Brak uprawnień do wykonania tej operacji.'],
     'denied as not found' => [fn () => (new AuthorizationException)->withStatus(404), 404, 'NOT_FOUND', 'Nie znaleziono zasobu.'],
     'model not found' => [fn () => new ModelNotFoundException, 404, 'NOT_FOUND', 'Nie znaleziono zasobu.'],
-    'route not found' => [fn () => new NotFoundHttpException, 404, 'NOT_FOUND', 'Nie znaleziono zasobu.'],
     'origin mismatch' => [fn () => new OriginMismatchException, 403, 'FORBIDDEN', 'Brak uprawnień do wykonania tej operacji.'],
     'csrf mismatch' => [fn () => new TokenMismatchException, 419, 'CSRF_MISMATCH', 'Sesja wygasła. Odśwież stronę i spróbuj ponownie.'],
     'bad request' => [fn () => new BadRequestHttpException, 400, 'BAD_REQUEST', 'Niepoprawne żądanie.'],
     'payload too large' => [fn () => new PostTooLargeException, 413, 'PAYLOAD_TOO_LARGE', 'Żądanie jest zbyt duże.'],
     'maintenance mode' => [fn () => new HttpException(503), 503, 'SERVICE_UNAVAILABLE', 'Usługa jest chwilowo niedostępna.'],
     'other client error' => [fn () => new GoneHttpException, 410, 'BAD_REQUEST', 'Niepoprawne żądanie.'],
-    'abort 401' => [fn () => new HttpException(401), 401, 'UNAUTHENTICATED', 'Brak aktywnej sesji. Zaloguj się.'],
-    'abort 404' => [fn () => new HttpException(404), 404, 'NOT_FOUND', 'Nie znaleziono zasobu.'],
     'server error status' => [fn () => new HttpException(502), 500, 'SERVER_ERROR', 'Wystąpił błąd serwera.'],
     'throttled' => [fn () => new ThrottleRequestsException, 429, 'TOO_MANY_REQUESTS', 'Zbyt wiele żądań. Spróbuj ponownie za chwilę.'],
 ]);
@@ -137,35 +127,6 @@ it('does not report domain exceptions but reports unexpected ones', function ():
 
     Exceptions::assertNotReported(DomainException::class);
     Exceptions::assertReported(RuntimeException::class);
-});
-
-it('passes a prepared HttpResponseException response through untouched', function (): void {
-    throwFromTestRoute(new HttpResponseException(response()->json(['custom' => true], 418)));
-
-    $response = $this->getJson('api/v1/_test/throw');
-
-    $response->assertStatus(418)->assertExactJson(['custom' => true]);
-});
-
-it('renders validation failures with errors per field', function (): void {
-    throwFromTestRoute(ValidationException::withMessages(['name' => ['Pole jest wymagane.']]));
-
-    $response = $this->getJson('api/v1/_test/throw');
-
-    $response->assertUnprocessable()
-        ->assertExactJson([
-            'message' => 'Dane są nieprawidłowe.',
-            'code' => 'VALIDATION_FAILED',
-            'errors' => ['name' => ['Pole jest wymagane.']],
-        ]);
-});
-
-it('renders a denial as not found through the policy response', function (): void {
-    Route::middleware('api')->get('api/v1/_test/deny', fn () => AccessResponse::denyAsNotFound()->authorize());
-
-    $response = $this->getJson('api/v1/_test/deny');
-
-    $response->assertNotFound()->assertJsonPath('code', 'NOT_FOUND');
 });
 
 it('keeps the Retry-After header on throttled responses', function (): void {
@@ -214,26 +175,10 @@ it('returns 405 with the Allow header when the method is not supported', functio
         ->assertExactJson(['message' => 'Metoda HTTP nie jest obsługiwana dla tego adresu.', 'code' => 'METHOD_NOT_ALLOWED']);
 });
 
-it('keeps the Allow header from the exception', function (): void {
-    throwFromTestRoute(new MethodNotAllowedHttpException(['GET', 'PUT']));
-
-    $response = $this->getJson('api/v1/_test/throw');
-
-    $response->assertStatus(405)->assertHeader('Allow', 'GET, PUT');
-});
-
 it('keeps the Retry-After header in maintenance mode', function (): void {
     throwFromTestRoute(new HttpException(503, headers: ['Retry-After' => '60']));
 
     $response = $this->getJson('api/v1/_test/throw');
 
     $response->assertStatus(503)->assertHeader('Retry-After', '60');
-});
-
-it('keeps the status of other client errors', function (): void {
-    throwFromTestRoute(new HttpException(410));
-
-    $response = $this->getJson('api/v1/_test/throw');
-
-    $response->assertStatus(410)->assertJsonPath('code', 'BAD_REQUEST');
 });

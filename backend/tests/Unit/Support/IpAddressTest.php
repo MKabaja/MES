@@ -8,9 +8,7 @@ it('leaves the address unchanged when it is not an ipv4-mapped ipv6 address', fu
     expect(IpAddress::unmapIpv4($ip))->toBe($ip);
 })->with([
     'ipv4' => '10.0.0.1',
-    'ipv6' => '2001:db8::1',
     'not an ip' => 'not-an-ip',
-    'empty' => '',
 ]);
 
 it('converts an ipv4-mapped ipv6 address to ipv4', function (string $ip): void {

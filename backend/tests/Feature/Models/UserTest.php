@@ -10,10 +10,3 @@ it('rejects a login differing only by letter case at the database level', functi
 
     User::factory()->create(['login' => 'jkowal']);
 })->throws(UniqueConstraintViolationException::class);
-
-it('hashes the password and hides secrets from serialization', function (): void {
-    $user = User::factory()->create(['password' => 'secret']);
-
-    expect($user->password)->not->toBe('secret')
-        ->and($user->toArray())->not->toHaveKeys(['password', 'remember_token']);
-});

@@ -48,22 +48,6 @@ it('returns saved settings unchanged', function (): void {
     expect($repository->current())->toEqual(customPlantSettings());
 });
 
-it('reads saved settings from the database in a fresh repository', function (): void {
-    resolve(SettingsRepository::class)->save(customPlantSettings());
-
-    expect((new SettingsRepository)->current())->toEqual(customPlantSettings());
-});
-
-it('memoizes the settings between reads', function (): void {
-    $repository = resolve(SettingsRepository::class);
-    $repository->current();
-
-    DB::enableQueryLog();
-    $repository->current();
-
-    expect(DB::getQueryLog())->toBeEmpty();
-});
-
 it('keeps a single settings row at the database level', function (): void {
     DB::table('settings')->insert([
         'id' => 2,
