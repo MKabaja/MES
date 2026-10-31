@@ -14,10 +14,10 @@ Route::prefix('v1')->group(function (): void {
         ->name('auth.login');
 
     Route::post('auth/logout', [AuthController::class, 'logout'])
-        ->middleware('auth:sanctum')
+        ->middleware(['auth:sanctum', 'throttle:api'])
         ->name('auth.logout');
 
-    Route::middleware(['auth:sanctum', 'active', 'network'])->group(function (): void {
+    Route::middleware(['auth:sanctum', 'throttle:api', 'active', 'network'])->group(function (): void {
         Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
 
         Route::get('settings/public', [SettingsController::class, 'showPublic'])

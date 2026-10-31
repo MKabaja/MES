@@ -43,6 +43,8 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($normalizedLogin.'|'.$request->ip());
         });
+
+        RateLimiter::for('api', fn (Request $request): Limit => Limit::perMinute(120)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
     }
 
     private function webGuard(): StatefulGuard
