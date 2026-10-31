@@ -65,3 +65,15 @@ it('adds CORS headers to the 400 response for an allowed origin', function (): v
 
     $response->assertBadRequest()->assertHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
 });
+
+it('returns 400 BAD_REQUEST for malformed UTF-8 in a query value or key', function (string $queryString): void {
+    $response = $this->getJson("/api/v1/auth/me?{$queryString}");
+
+    $response->assertBadRequest()->assertExactJson([
+        'message' => 'Niepoprawne żądanie.',
+        'code' => 'BAD_REQUEST',
+    ]);
+})->with([
+    'value' => ['search=%FF'],
+    'key' => ['se%C3arch=x'],
+]);
