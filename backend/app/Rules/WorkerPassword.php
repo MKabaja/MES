@@ -12,7 +12,7 @@ class WorkerPassword implements ValidationRule
     private const int MAX_BYTES = 72;
 
     /**
-     * Fails when the password is longer than bcrypt reads (72 bytes) or consists only of whitespace.
+     * Fails when the password is longer than bcrypt reads (72 bytes) or consists only of whitespace or invisible characters.
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -26,7 +26,7 @@ class WorkerPassword implements ValidationRule
             return;
         }
 
-        if (preg_match('/\A[\s\p{Z}]*\z/u', $value) === 1) {
+        if (preg_match('/\A[\s\p{Z}\p{Cf}]*\z/u', $value) === 1) {
             $fail('validation.password_blank')->translate();
         }
     }

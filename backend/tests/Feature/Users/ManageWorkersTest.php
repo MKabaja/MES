@@ -220,7 +220,7 @@ it('explains in Polish why a name or password was rejected', function (): void {
     $response->assertJsonPath('errors.first_name.0', 'Pole imię musi zawierać co najmniej jedną literę.');
 
     $response = $this->actingAs($admin, 'web')->postJson(route('users.store'), newWorkerPayload(['password' => "\u{00A0}\u{2003}\u{00A0}\u{2003}"]));
-    $response->assertJsonPath('errors.password.0', 'Pole hasło nie może składać się wyłącznie z białych znaków.');
+    $response->assertJsonPath('errors.password.0', 'Pole hasło nie może składać się wyłącznie z białych lub niewidocznych znaków.');
 
     $response = $this->actingAs($admin, 'web')->postJson(route('users.store'), newWorkerPayload(['password' => str_repeat('ą', 40)]));
     $response->assertJsonPath('errors.password.0', 'Pole hasło może mieć najwyżej 72 bajty (znaki spoza ASCII zajmują kilka bajtów).');
@@ -278,4 +278,29 @@ it('stores a password that looks like a bcrypt hash literally so the worker can 
 
     expect(Hash::check($hashLikePassword, User::findOrFail($created->json('data.id'))->password))->toBeTrue()
         ->and(Hash::check($hashLikePassword, $reset->refresh()->password))->toBeTrue();
+});
+
+it('rejects invisible characters in names and passwords made only of whitespace or invisible characters', function (string $field, string $value): void {
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin, 'web')->postJson(route('users.store'), newWorkerPayload([$field => $value]));
+
+    $response->assertUnprocessable()->assertJsonValidationErrors([$field]);
+    $this->assertDatabaseCount('users', 1);
+})->with([
+    'name with a line break' => ['first_name', "Jan\nPaweł"],
+    'name with a tab' => ['last_name', "Kowal\tski"],
+    'name with a right-to-left override' => ['last_name', "Kowal\u{202E}ski"],
+    'name with a zero-width space' => ['first_name', "Ja\u{200B}n"],
+    'name with a byte order mark' => ['last_name', "Kowal\u{FEFF}ski"],
+    'password of zero-width spaces' => ['password', "\u{200B}\u{200B}\u{200B}\u{200B}"],
+    'password of spaces and a byte order mark' => ['password', " \u{FEFF} \u{200B}"],
+]);
+
+it('accepts a zero-width space inside an otherwise visible password', function (): void {
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin, 'web')->postJson(route('users.store'), newWorkerPayload(['password' => "ab\u{200B}cd"]));
+
+    $response->assertCreated();
 });

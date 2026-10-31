@@ -163,7 +163,8 @@ return [
     'network_too_broad' => 'Pole :attribute nie może obejmować wszystkich adresów (prefiks 0).',
     'person_name' => 'Pole :attribute musi zawierać co najmniej jedną literę.',
     'password_too_many_bytes' => 'Pole :attribute może mieć najwyżej 72 bajty (znaki spoza ASCII zajmują kilka bajtów).',
-    'password_blank' => 'Pole :attribute nie może składać się wyłącznie z białych znaków.',
+    'password_blank' => 'Pole :attribute nie może składać się wyłącznie z białych lub niewidocznych znaków.',
+    'person_name_invisible' => 'Pole :attribute nie może zawierać znaków sterujących ani niewidocznych.',
     'break_overlap' => 'Przerwy nie mogą się nakładać.',
 
     'custom' => [
