@@ -15,7 +15,6 @@ use Closure;
 use Illuminate\Console\Command;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class CreateAdminCommand extends Command
 {
@@ -140,7 +139,7 @@ class CreateAdminCommand extends Command
     {
         $loginIsFree = function (string $attribute, mixed $value, Closure $fail): void {
             $isTaken = is_string($value)
-                && User::query()->whereRaw('lower(login) = ?', [Str::lower($value)])->exists();
+                && User::query()->whereLoginIs($value)->exists();
 
             if ($isTaken) {
                 $fail('validation.unique')->translate();

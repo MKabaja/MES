@@ -47,6 +47,14 @@ it('signs the user in regardless of the letter case of the login', function (): 
     $this->assertAuthenticatedAs($user, 'web');
 });
 
+it('matches non-ASCII logins regardless of letter case in the database', function (): void {
+    $user = User::factory()->admin()->create(['login' => 'Żółw']);
+
+    $response = $this->postJson(route('auth.login'), ['login' => 'żÓŁW', 'password' => 'password']);
+
+    $response->assertOk()->assertJsonPath('data.id', $user->id);
+});
+
 it('returns 422 with the same error for an unknown login and a wrong password', function (array $credentials): void {
     User::factory()->create(['login' => 'Jkowal']);
 
