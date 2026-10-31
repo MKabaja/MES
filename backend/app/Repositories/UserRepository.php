@@ -24,9 +24,7 @@ class UserRepository
             ->workers()
             ->when($filters->status !== UserStatusFilter::All, fn (Builder $query) => $query->where('is_active', $filters->status === UserStatusFilter::Active))
             ->when($filters->search !== null, fn (Builder $query) => $this->matchingSearch($query, (string) $filters->search))
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->orderBy('id')
+            ->tap(fn (Builder $query) => $this->orderedBySurname($query))
             ->paginate(perPage: $filters->perPage, page: $filters->page);
     }
 
@@ -40,10 +38,18 @@ class UserRepository
         return User::query()
             ->workers()
             ->where('is_active', true)
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->orderBy('id')
+            ->tap(fn (Builder $query) => $this->orderedBySurname($query))
             ->get(['id', 'first_name', 'last_name', 'login']);
+    }
+
+    /**
+     * @param  Builder<User>  $query
+     */
+    private function orderedBySurname(Builder $query): void
+    {
+        $query->orderByRaw('last_name collate "pl-PL-x-icu"')
+            ->orderByRaw('first_name collate "pl-PL-x-icu"')
+            ->orderBy('id');
     }
 
     /**

@@ -109,3 +109,14 @@ it('lists active workers sorted by surname with only id, full name and login, fo
         ...($role === 'worker' ? [['id' => $caller->id, 'full_name' => 'Ewa Zielińska', 'login' => 'Ezieli']] : []),
     ]]);
 })->with(['admin', 'worker']);
+
+it('sorts surnames by Polish collation regardless of letter case', function (): void {
+    $admin = User::factory()->admin()->create();
+    foreach (['Zając', 'Łoś', 'cebula', 'Mak', 'Ćwik', 'Dąb', 'Lis'] as $lastName) {
+        User::factory()->create(['last_name' => $lastName]);
+    }
+
+    $response = $this->actingAs($admin, 'web')->getJson(route('users.index'));
+
+    expect($response->json('data.*.last_name'))->toBe(['cebula', 'Ćwik', 'Dąb', 'Lis', 'Łoś', 'Mak', 'Zając']);
+});
