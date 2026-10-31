@@ -35,7 +35,7 @@ final readonly class LoginAction
      */
     public function handle(LoginData $credentials, string $ip, Session $session): User
     {
-        $this->failedLoginLimiter->ensureNotBlocked($ip);
+        $this->failedLoginLimiter->registerAttempt($ip);
 
         $user = User::query()
             ->whereRaw('lower(login) = ?', [Str::lower($credentials->login)])
@@ -45,10 +45,10 @@ final readonly class LoginAction
         $isPasswordValid = $this->hasher->check($credentials->password, $user->password ?? $dummyHash);
 
         if ($user === null || ! $isPasswordValid) {
-            $this->failedLoginLimiter->recordFailure($ip);
-
             throw new DomainException(ErrorCode::InvalidCredentials, field: 'login');
         }
+
+        $this->failedLoginLimiter->releaseAttempt($ip);
 
         if (! $user->is_active) {
             throw new DomainException(ErrorCode::AccountInactive);

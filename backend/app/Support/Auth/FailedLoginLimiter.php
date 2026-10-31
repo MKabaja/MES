@@ -19,25 +19,25 @@ final readonly class FailedLoginLimiter
     public function __construct(private RateLimiter $limiter) {}
 
     /**
-     * Rejects the login while the client network has used up its failed attempts in the current window.
+     * Counts the login attempt of the client network up front and rejects it once the network exceeds its failed attempts in the current window.
      *
      * @throws ThrottleRequestsException
      */
-    public function ensureNotBlocked(string $ip): void
+    public function registerAttempt(string $ip): void
     {
         $key = $this->keyFor($ip);
 
-        if ($this->limiter->tooManyAttempts($key, self::MAX_FAILED_ATTEMPTS)) {
+        if ($this->limiter->hit($key, self::DECAY_SECONDS) > self::MAX_FAILED_ATTEMPTS) {
             throw new ThrottleRequestsException(headers: ['Retry-After' => $this->limiter->availableIn($key)]);
         }
     }
 
     /**
-     * Counts a failed login of the client network towards its limit.
+     * Withdraws the registered attempt of the client network after the password turned out to be correct.
      */
-    public function recordFailure(string $ip): void
+    public function releaseAttempt(string $ip): void
     {
-        $this->limiter->hit($this->keyFor($ip), self::DECAY_SECONDS);
+        $this->limiter->decrement($this->keyFor($ip), self::DECAY_SECONDS);
     }
 
     private function keyFor(string $ip): string
