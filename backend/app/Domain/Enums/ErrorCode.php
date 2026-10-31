@@ -79,6 +79,16 @@ enum ErrorCode: string
     }
 
     /**
+     * Returns the message of this error code in the current locale.
+     *
+     * @param  array<string, string|int>  $replace
+     */
+    public function message(array $replace = []): string
+    {
+        return __('errors.'.$this->value, $replace);
+    }
+
+    /**
      * Returns the general error code that describes a client error HTTP status, falling back to BAD_REQUEST.
      */
     public static function forHttpStatus(int $status): self
