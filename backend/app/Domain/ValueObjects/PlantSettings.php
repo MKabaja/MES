@@ -67,6 +67,39 @@ final readonly class PlantSettings
     }
 
     /**
+     * Returns the settings in the shape of the settings contract.
+     *
+     * @return array{
+     *     shift_start: string,
+     *     shift_end: string,
+     *     breaks: list<array{start: string, end: string}>,
+     *     deduct_breaks: bool,
+     *     auto_pause_enabled: bool,
+     *     worker_backdate_days: int,
+     *     station_idle_logout_minutes: int,
+     *     worker_network_restriction_enabled: bool,
+     *     worker_allowed_networks: list<string>
+     * }
+     */
+    public function toArray(): array
+    {
+        return [
+            'shift_start' => $this->shiftStart,
+            'shift_end' => $this->shiftEnd,
+            'breaks' => array_map(
+                static fn (BreakWindow $break): array => ['start' => $break->start, 'end' => $break->end],
+                $this->breaks,
+            ),
+            'deduct_breaks' => $this->deductBreaks,
+            'auto_pause_enabled' => $this->autoPauseEnabled,
+            'worker_backdate_days' => $this->workerBackdateDays,
+            'station_idle_logout_minutes' => $this->stationIdleLogoutMinutes,
+            'worker_network_restriction_enabled' => $this->workerNetworkRestrictionEnabled,
+            'worker_allowed_networks' => $this->workerAllowedNetworks,
+        ];
+    }
+
+    /**
      * @param  list<BreakWindow>  $breaks
      */
     private static function assertBreaksFitShift(array $breaks, string $shiftStart, string $shiftEnd): void
