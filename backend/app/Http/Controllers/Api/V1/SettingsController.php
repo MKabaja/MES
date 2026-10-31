@@ -13,11 +13,17 @@ use App\Repositories\SettingsRepository;
 
 class SettingsController extends Controller
 {
+    /**
+     * Returns the full plant settings for the office.
+     */
     public function show(SettingsRepository $settings): SettingsResource
     {
         return new SettingsResource($settings->current());
     }
 
+    /**
+     * Validates and saves the plant settings and returns the stored values.
+     */
     public function update(UpdateSettingsRequest $request, UpdateSettingsAction $updateSettings): SettingsResource
     {
         return new SettingsResource(
@@ -25,6 +31,9 @@ class SettingsController extends Controller
         );
     }
 
+    /**
+     * Returns the subset of plant settings that the hall terminal may see.
+     */
     public function showPublic(SettingsRepository $settings): PublicSettingsResource
     {
         return new PublicSettingsResource($settings->current());

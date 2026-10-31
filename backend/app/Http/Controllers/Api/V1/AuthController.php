@@ -14,11 +14,17 @@ use Illuminate\Http\Response;
 
 class AuthController extends Controller
 {
+    /**
+     * Signs the user in and returns the account.
+     */
     public function login(LoginRequest $request, LoginAction $login): UserResource
     {
         return new UserResource($login->handle($request->toData(), (string) $request->ip(), $request->session()));
     }
 
+    /**
+     * Ends the current session.
+     */
     public function logout(Request $request, LogoutAction $logout): Response
     {
         $logout->handle($request->session());
@@ -26,6 +32,9 @@ class AuthController extends Controller
         return response()->noContent();
     }
 
+    /**
+     * Returns the signed-in account.
+     */
     public function me(Request $request): UserResource
     {
         return new UserResource($request->user());

@@ -11,6 +11,9 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class WorkerController extends Controller
 {
+    /**
+     * Lists active workers for the hall login choice.
+     */
     public function index(UserRepository $users): AnonymousResourceCollection
     {
         return WorkerChoiceResource::collection($users->activeWorkers());
