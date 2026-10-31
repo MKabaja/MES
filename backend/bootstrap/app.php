@@ -20,6 +20,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\OriginMismatchException;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Validation\ValidationException;
@@ -38,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->prepend([SecurityHeaders::class, SetLocaleFromHeader::class, RejectControlCharacters::class]);
+        $middleware->prepend([SecurityHeaders::class, SetLocaleFromHeader::class, HandleCors::class, RejectControlCharacters::class]);
         $middleware->statefulApi();
         $middleware->alias([
             'active' => EnsureUserIsActive::class,
