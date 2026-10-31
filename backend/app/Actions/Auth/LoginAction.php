@@ -12,7 +12,7 @@ use App\Models\User;
 use App\Repositories\SettingsRepository;
 use App\Support\Auth\DummyPasswordHash;
 use App\Support\Auth\FailedLoginLimiter;
-use Illuminate\Contracts\Auth\StatefulGuard;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Support\Facades\DB;
@@ -20,8 +20,10 @@ use Illuminate\Support\Str;
 
 final readonly class LoginAction
 {
+    private const string PASSWORD_HASH_SESSION_KEY = 'password_hash_web';
+
     public function __construct(
-        private StatefulGuard $guard,
+        private SessionGuard $guard,
         private Hasher $hasher,
         private DummyPasswordHash $dummyPasswordHash,
         private FailedLoginLimiter $failedLoginLimiter,
@@ -57,26 +59,38 @@ final readonly class LoginAction
 
         $this->networkAccess->assertAllowed($user, $ip, $this->settings->current());
 
-        if ($this->hasher->needsRehash($user->password)) {
-            $this->rehashPassword($user, $credentials->password);
+        $verifiedHash = $user->password;
+
+        if ($this->hasher->needsRehash($verifiedHash)) {
+            $verifiedHash = $this->rehashPassword($user, $credentials->password, $verifiedHash);
         }
 
         $this->guard->login($user);
         $session->regenerate(destroy: true);
+        $session->put(
+            self::PASSWORD_HASH_SESSION_KEY,
+            $this->guard->hashPasswordForCookie($verifiedHash),
+        );
 
         return $user;
     }
 
-    private function rehashPassword(User $user, string $password): void
+    private function rehashPassword(User $user, string $password, string $verifiedHash): string
     {
-        DB::transaction(function () use ($user, $password): void {
+        $boundHash = DB::transaction(function () use ($user, $password, $verifiedHash): string {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
 
-            if ($this->hasher->needsRehash($lockedUser->password)) {
-                $lockedUser->update(['password' => $password]);
+            if ($lockedUser->password !== $verifiedHash) {
+                return $verifiedHash;
             }
+
+            $lockedUser->update(['password' => $this->hasher->make($password)]);
+
+            return $lockedUser->password;
         });
 
         $user->refresh();
+
+        return $boundHash;
     }
 }

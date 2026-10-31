@@ -8,6 +8,7 @@ use App\Actions\Auth\LoginAction;
 use App\Actions\Auth\LogoutAction;
 use App\Repositories\SettingsRepository;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Contracts\Auth\StatefulGuard;
@@ -26,7 +27,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(SettingsRepository::class);
 
-        $this->app->when([LoginAction::class, LogoutAction::class])
+        $this->app->when(LoginAction::class)
+            ->needs(SessionGuard::class)
+            ->give(fn (): SessionGuard => $this->webGuard());
+
+        $this->app->when(LogoutAction::class)
             ->needs(StatefulGuard::class)
             ->give(fn (): StatefulGuard => $this->webGuard());
     }
@@ -47,12 +52,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api', fn (Request $request): Limit => Limit::perMinute(120)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
     }
 
-    private function webGuard(): StatefulGuard
+    private function webGuard(): SessionGuard
     {
         $guard = $this->app->make(AuthFactory::class)->guard('web');
 
-        if (! $guard instanceof StatefulGuard) {
-            throw new LogicException('The web guard must be stateful.');
+        if (! $guard instanceof SessionGuard) {
+            throw new LogicException('The web guard must be a session guard.');
         }
 
         return $guard;
