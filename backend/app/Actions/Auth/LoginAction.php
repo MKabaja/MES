@@ -15,6 +15,7 @@ use App\Support\Auth\FailedLoginLimiter;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Contracts\Session\Session;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 final readonly class LoginAction
@@ -57,12 +58,25 @@ final readonly class LoginAction
         $this->networkAccess->assertAllowed($user, $ip, $this->settings->current());
 
         if ($this->hasher->needsRehash($user->password)) {
-            $user->update(['password' => $credentials->password]);
+            $this->rehashPassword($user, $credentials->password);
         }
 
         $this->guard->login($user);
         $session->regenerate(destroy: true);
 
         return $user;
+    }
+
+    private function rehashPassword(User $user, string $password): void
+    {
+        DB::transaction(function () use ($user, $password): void {
+            $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
+
+            if ($this->hasher->needsRehash($lockedUser->password)) {
+                $lockedUser->update(['password' => $password]);
+            }
+        });
+
+        $user->refresh();
     }
 }

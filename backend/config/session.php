@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Support\Session\SecureSessionCookie;
 use Illuminate\Support\Str;
+
+$configuredSecureCookie = env('SESSION_SECURE_COOKIE');
 
 return [
 
@@ -171,7 +174,10 @@ return [
     |
     */
 
-    'secure' => (bool) env('SESSION_SECURE_COOKIE', env('APP_ENV', 'production') !== 'local'),
+    'secure' => SecureSessionCookie::isRequired(
+        (string) env('APP_ENV', 'production'),
+        is_bool($configuredSecureCookie) ? $configuredSecureCookie : null,
+    ),
 
     /*
     |--------------------------------------------------------------------------
