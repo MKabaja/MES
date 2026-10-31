@@ -1,0 +1,56 @@
+@theme {
+	--color-bg: #0d1118;
+	--color-surface: #151a23;
+	--color-surface-2: #1c2330;
+	--color-border: #2a3342;
+	--color-border-input: #626e86;
+	--color-text: #e6eaf0;
+	--color-text-2: #a3adbd;
+	--color-text-3: #8792a4;
+	--color-accent: #0090f6;
+	--color-accent-hover: #3aa9ff;
+	--color-on-accent: #0d1118;
+	--color-navy: #2f3ba2;
+	--color-success: #4ade80;
+	--color-warning: #f5b83d;
+	--color-danger: #f87171;
+	--color-cat-pink: #f472b6;
+	--color-cat-gray: #8b95a7;
+	--color-cat-teal: #2dd4bf;
+	--color-cat-violet: #a78bfa;
+
+	--font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+	--font-sans: "IBM Plex Sans", system-ui, "Segoe UI", Roboto, sans-serif;
+
+	--radius-sm: 6px;
+	--radius-md: 10px;
+	--radius-lg: 14px;
+
+	--shadow-raised:
+		6px 6px 16px rgba(0, 0, 0, 0.42), -4px -4px 12px rgba(255, 255, 255, 0.022),
+		inset 0 1px 0 rgba(255, 255, 255, 0.045);
+	--shadow-raised-sm:
+		3px 3px 8px rgba(0, 0, 0, 0.4), -2px -2px 6px rgba(255, 255, 255, 0.025);
+	--shadow-inset:
+		inset 3px 3px 7px rgba(0, 0, 0, 0.48),
+		inset -2px -2px 5px rgba(255, 255, 255, 0.028);
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+}

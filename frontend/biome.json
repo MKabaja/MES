@@ -1,0 +1,151 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"files": {
+		"includes": [
+			"**",
+			"!**/routeTree.gen.ts",
+			"!**/dist",
+			"!**/node_modules",
+			"!**/coverage",
+			"!**/*.tsbuildinfo"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"lineEnding": "lf"
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single"
+		}
+	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"linter": {
+		"enabled": true,
+		"domains": {
+			"react": "recommended"
+		},
+		"rules": {
+			"preset": "recommended",
+			"suspicious": {
+				"noExplicitAny": "error",
+				"noConsole": {
+					"level": "error",
+					"options": { "allow": ["warn", "error"] }
+				}
+			},
+			"style": {
+				"noNonNullAssertion": "error",
+				"useImportType": "error",
+				"noDefaultExport": "error",
+				"useFilenamingConvention": {
+					"level": "error",
+					"options": { "filenameCases": ["kebab-case"] }
+				}
+			},
+			"correctness": {
+				"useExhaustiveDependencies": "error"
+			},
+			"performance": {
+				"noBarrelFile": "error"
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": ["*.ts", "*.js", "*.mjs"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noDefaultExport": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/routes/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useFilenamingConvention": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/shared/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"patterns": [
+									{
+										"group": ["@/features/**", "@/routes/**"],
+										"message": "shared must not import from features or routes."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/features/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"patterns": [
+									{
+										"group": ["@/routes/**"],
+										"message": "features must not import from routes."
+									},
+									{
+										"group": [
+											"@/features/*/utils/**",
+											"@/features/*/api/*.api",
+											"@/features/*/api/use-*",
+											"@/features/*/components/*/*.*",
+											"@/features/*/components/*/use-*",
+											"@/features/*/components/*/*/**"
+										],
+										"message": "From another feature import only api/*.queries, model/* and the main component components/<k>/<k>."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/**", "!src/shared/api/http.ts"],
+			"plugins": ["./biome-plugins/no-raw-fetch.grit"]
+		},
+		{
+			"includes": ["src/**", "!src/shared/lib/storage.ts"],
+			"plugins": ["./biome-plugins/no-direct-storage.grit"]
+		},
+		{
+			"includes": ["src/features/**/*.tsx"],
+			"plugins": ["./biome-plugins/no-inline-tailwind-in-features.grit"]
+		}
+	]
+}

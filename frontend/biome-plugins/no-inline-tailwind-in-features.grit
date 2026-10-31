@@ -1,0 +1,6 @@
+language js
+
+`className="$classes"` as $attribute where {
+	$classes <: r".+\s.+",
+	register_diagnostic(span=$attribute, message="Move multi-class Tailwind strings to the component *.styles.ts file.", severity="error")
+}
