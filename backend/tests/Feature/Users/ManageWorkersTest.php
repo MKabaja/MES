@@ -304,3 +304,39 @@ it('accepts a zero-width space inside an otherwise visible password', function (
 
     $response->assertCreated();
 });
+
+it('ignores role, login and is_active sent when creating a worker', function (): void {
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin, 'web')->postJson(route('users.store'), newWorkerPayload([
+        'role' => 'admin',
+        'login' => 'Hacker',
+        'is_active' => false,
+    ]));
+
+    $response->assertCreated();
+    $worker = User::query()->findOrFail($response->json('data.id'));
+    expect($worker->role)->toBe(Role::Worker)
+        ->and($worker->login)->toBe('Jkowal')
+        ->and($worker->is_active)->toBeTrue();
+});
+
+it('ignores role, login and password sent when updating a worker', function (): void {
+    $admin = User::factory()->admin()->create();
+    $worker = User::factory()->create(['first_name' => 'Jan', 'last_name' => 'Kowalski', 'login' => 'Jkowal']);
+    $passwordHash = $worker->password;
+
+    $response = $this->actingAs($admin, 'web')->patchJson(route('users.update', $worker->id), [
+        'first_name' => 'Janusz',
+        'role' => 'admin',
+        'login' => 'Hacker',
+        'password' => 'new-secret',
+    ]);
+
+    $response->assertOk();
+    $worker->refresh();
+    expect($worker->first_name)->toBe('Janusz')
+        ->and($worker->role)->toBe(Role::Worker)
+        ->and($worker->login)->toBe('Jkowal')
+        ->and($worker->password)->toBe($passwordHash);
+});
