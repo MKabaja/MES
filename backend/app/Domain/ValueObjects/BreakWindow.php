@@ -8,7 +8,7 @@ use InvalidArgumentException;
 
 final readonly class BreakWindow
 {
-    public const string TIME_PATTERN = '/^([01]\d|2[0-3]):[0-5]\d$/';
+    public const string TIME_PATTERN = '/^([01]\d|2[0-3]):[0-5]\d\z/';
 
     /**
      * Creates a break from two `HH:MM` times of the same day.

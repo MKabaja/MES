@@ -86,3 +86,10 @@ it('accepts boundary values', function (array $overrides): void {
     'break spanning the whole shift' => [['breaks' => [new BreakWindow('06:00', '14:00')]]],
     'adjacent breaks' => [['breaks' => [new BreakWindow('10:00', '10:15'), new BreakWindow('10:15', '10:30')]]],
 ]);
+
+it('rejects a time with a trailing newline', function (string $start, string $end): void {
+    new BreakWindow($start, $end);
+})->with([
+    'start' => ["10:00\n", '10:15'],
+    'end' => ['10:00', "10:15\n"],
+])->throws(InvalidArgumentException::class);
