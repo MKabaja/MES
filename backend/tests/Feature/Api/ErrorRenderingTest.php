@@ -69,12 +69,12 @@ function statusByErrorCode(): array
 }
 
 it('renders every error code with its contract status and the envelope', function (string $code, int $status): void {
-    throwFromTestRoute(new DomainException(ErrorCode::from($code), 'Komunikat testowy.'));
+    throwFromTestRoute(new DomainException(ErrorCode::from($code)));
 
     $response = $this->getJson('api/v1/_test/throw');
 
     $response->assertStatus($status)
-        ->assertExactJson(['message' => 'Komunikat testowy.', 'code' => $code]);
+        ->assertExactJson(['message' => trans('errors.'.$code, locale: 'pl'), 'code' => $code]);
 })->with(function () {
     foreach (statusByErrorCode() as $code => $status) {
         yield $code => [$code, $status];
@@ -89,15 +89,15 @@ it('has a dataset entry for every error code', function (): void {
 });
 
 it('puts the message under the field when a domain error names one', function (): void {
-    throwFromTestRoute(new DomainException(ErrorCode::SegmentOverlap, 'Odcinek nachodzi na Twoją pracę.', 'started_at'));
+    throwFromTestRoute(new DomainException(ErrorCode::SegmentOverlap, 'started_at'));
 
     $response = $this->getJson('api/v1/_test/throw');
 
     $response->assertUnprocessable()
         ->assertExactJson([
-            'message' => 'Odcinek nachodzi na Twoją pracę.',
+            'message' => 'Odcinek nachodzi na inną Twoją pracę.',
             'code' => 'SEGMENT_OVERLAP',
-            'errors' => ['started_at' => ['Odcinek nachodzi na Twoją pracę.']],
+            'errors' => ['started_at' => ['Odcinek nachodzi na inną Twoją pracę.']],
         ]);
 });
 
@@ -129,7 +129,7 @@ it('renders framework exceptions in the envelope', function (Closure $makeExcept
 
 it('does not report domain exceptions but reports unexpected ones', function (): void {
     Exceptions::fake();
-    Route::middleware('api')->get('api/v1/_test/domain', fn () => throw new DomainException(ErrorCode::OrderLocked, 'Zlecenie zablokowane.'));
+    Route::middleware('api')->get('api/v1/_test/domain', fn () => throw new DomainException(ErrorCode::OrderLocked));
     Route::middleware('api')->get('api/v1/_test/boom', fn () => throw new RuntimeException('boom'));
 
     $this->getJson('api/v1/_test/domain');

@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'UNAUTHENTICATED' => 'Brak aktywnej sesji. Zaloguj się.',
+    'FORBIDDEN' => 'Brak uprawnień do wykonania tej operacji.',
+    'NOT_FOUND' => 'Nie znaleziono zasobu.',
+    'CSRF_MISMATCH' => 'Sesja wygasła. Odśwież stronę i spróbuj ponownie.',
+    'VALIDATION_FAILED' => 'Dane są nieprawidłowe.',
+    'TOO_MANY_REQUESTS' => 'Zbyt wiele żądań. Spróbuj ponownie za chwilę.',
+    'SERVER_ERROR' => 'Wystąpił błąd serwera.',
+    'BAD_REQUEST' => 'Niepoprawne żądanie.',
+    'METHOD_NOT_ALLOWED' => 'Metoda HTTP nie jest obsługiwana dla tego adresu.',
+    'PAYLOAD_TOO_LARGE' => 'Żądanie jest zbyt duże.',
+    'SERVICE_UNAVAILABLE' => 'Usługa jest chwilowo niedostępna.',
+    'INVALID_CREDENTIALS' => 'Nieprawidłowy login lub hasło.',
+    'ACCOUNT_INACTIVE' => 'Konto jest nieaktywne.',
+    'NETWORK_NOT_ALLOWED' => 'Logowanie z tej sieci jest niedozwolone.',
+    'CODE_NOT_FOUND' => 'Nie znaleziono pozycji o podanym kodzie.',
+    'ORDER_NOT_DRAFT' => 'Zlecenie nie jest już szkicem.',
+    'ORDER_HAS_NO_POSITIONS' => 'Zlecenie nie ma żadnej pozycji.',
+    'ORDER_HAS_OPEN_SEGMENTS' => 'Zlecenie ma otwarte odcinki pracy.',
+    'ORDER_LOCKED' => 'Zlecenie jest zablokowane.',
+    'ORDER_NOT_ACTIVE' => 'Zlecenie nie jest aktywne.',
+    'POSITION_COMPLETED' => 'Pozycja jest już zakończona.',
+    'POSITION_HAS_WORK' => 'Pozycja ma zarejestrowaną pracę lub zużycie.',
+    'ALREADY_WORKING' => 'Pracujesz już przy tej pozycji.',
+    'NO_OPEN_SEGMENT' => 'Brak otwartego odcinka pracy.',
+    'USER_HAS_OPEN_SEGMENT' => 'Pracownik ma otwarty odcinek pracy.',
+    'IDEMPOTENCY_KEY_REUSED' => 'Klucz idempotencji został użyty z innym żądaniem.',
+    'TIME_IN_FUTURE' => 'Czas nie może być z przyszłości.',
+    'TIME_BEFORE_POSITION' => 'Czas nie może być wcześniejszy niż początek pozycji.',
+    'TIME_TOO_FAR_BACK' => 'Czas wykracza poza dozwolony zakres wstecz.',
+    'TIME_END_BEFORE_START' => 'Koniec odcinka nie może być wcześniejszy niż jego początek.',
+    'SEGMENT_OVERLAP' => 'Odcinek nachodzi na inną Twoją pracę.',
+];

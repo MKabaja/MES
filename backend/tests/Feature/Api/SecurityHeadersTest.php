@@ -46,7 +46,7 @@ it('adds the security headers to a not found response for an unknown api route',
 });
 
 it('adds the security headers to a domain error response', function (): void {
-    Route::middleware('api')->get('api/v1/_test/conflict', fn () => throw new DomainException(ErrorCode::OrderLocked, 'Zlecenie jest zablokowane.'));
+    Route::middleware('api')->get('api/v1/_test/conflict', fn () => throw new DomainException(ErrorCode::OrderLocked));
 
     $response = $this->getJson('api/v1/_test/conflict');
 
@@ -59,6 +59,7 @@ it('adds the security headers to a response cut short by an earlier global middl
     $response = $this->call('POST', 'api/v1/_test/upload', server: [
         'CONTENT_LENGTH' => 99999999999,
         'HTTP_ACCEPT' => 'application/json',
+        'HTTP_ACCEPT_LANGUAGE' => 'pl',
     ]);
 
     $response->assertStatus(413)
