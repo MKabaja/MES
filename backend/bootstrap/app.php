@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 use App\Domain\Enums\ErrorCode;
 use App\Domain\Exceptions\DomainException;
+use App\Http\Middleware\EnsureRequestHasSession;
+use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\EnsureWorkerNetworkAllowed;
+use App\Http\Middleware\RejectMalformedInput;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SetLocaleFromHeader;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -14,6 +20,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\OriginMismatchException;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Validation\ValidationException;
@@ -32,7 +39,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->prepend(SecurityHeaders::class);
+        $middleware->prepend([SecurityHeaders::class, SetLocaleFromHeader::class, HandleCors::class, RejectMalformedInput::class]);
+        $middleware->statefulApi();
+        $middleware->alias([
+            'active' => EnsureUserIsActive::class,
+            'network' => EnsureWorkerNetworkAllowed::class,
+            'role' => EnsureRole::class,
+            'stateful' => EnsureRequestHasSession::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontReport(DomainException::class);
@@ -47,12 +61,12 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $envelope = function (
             ErrorCode $code,
-            string $message,
             array $errors = [],
             array $headers = [],
             ?int $status = null,
+            ?string $message = null,
         ): JsonResponse {
-            $body = ['message' => $message, 'code' => $code->value];
+            $body = ['message' => $message ?? $code->message(), 'code' => $code->value];
 
             if ($errors !== []) {
                 $body['errors'] = $errors;
@@ -66,74 +80,46 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            $forbidden = fn () => $envelope(ErrorCode::Forbidden, 'Brak uprawnień do wykonania tej operacji.');
-            $notFound = fn () => $envelope(ErrorCode::NotFound, 'Nie znaleziono zasobu.');
-            $badRequest = fn () => $envelope(ErrorCode::BadRequest, 'Niepoprawne żądanie.');
-            $messageForGeneralCode = fn (ErrorCode $code): string => match ($code) {
-                ErrorCode::Unauthenticated => 'Brak aktywnej sesji. Zaloguj się.',
-                ErrorCode::Forbidden => 'Brak uprawnień do wykonania tej operacji.',
-                ErrorCode::NotFound => 'Nie znaleziono zasobu.',
-                ErrorCode::MethodNotAllowed => 'Metoda HTTP nie jest obsługiwana dla tego adresu.',
-                ErrorCode::PayloadTooLarge => 'Żądanie jest zbyt duże.',
-                ErrorCode::CsrfMismatch => 'Sesja wygasła. Odśwież stronę i spróbuj ponownie.',
-                ErrorCode::ValidationFailed => 'Dane są nieprawidłowe.',
-                ErrorCode::TooManyRequests => 'Zbyt wiele żądań. Spróbuj ponownie za chwilę.',
-                default => 'Niepoprawne żądanie.',
-            };
+            $forbidden = fn () => $envelope(ErrorCode::Forbidden);
+            $notFound = fn () => $envelope(ErrorCode::NotFound);
+            $badRequest = fn () => $envelope(ErrorCode::BadRequest);
             $cause = $exception->getPrevious();
 
             return match (true) {
                 $exception instanceof HttpResponseException => null,
                 $exception instanceof DomainException => $envelope(
                     $exception->errorCode,
-                    $exception->getMessage(),
                     $exception->field === null ? [] : [$exception->field => [$exception->getMessage()]],
+                    message: $exception->getMessage(),
                 ),
-                $exception instanceof ValidationException => $envelope(
-                    ErrorCode::ValidationFailed,
-                    'Dane są nieprawidłowe.',
-                    $exception->errors(),
-                ),
-                $exception instanceof AuthenticationException => $envelope(
-                    ErrorCode::Unauthenticated,
-                    'Brak aktywnej sesji. Zaloguj się.',
-                ),
+                $exception instanceof ValidationException => $envelope(ErrorCode::ValidationFailed, $exception->errors()),
+                $exception instanceof AuthenticationException => $envelope(ErrorCode::Unauthenticated),
                 $exception instanceof AccessDeniedHttpException => $forbidden(),
                 $exception instanceof NotFoundHttpException => $notFound(),
                 $exception instanceof BadRequestHttpException => $badRequest(),
                 $exception instanceof MethodNotAllowedHttpException => $envelope(
                     ErrorCode::MethodNotAllowed,
-                    'Metoda HTTP nie jest obsługiwana dla tego adresu.',
                     headers: array_intersect_key($exception->getHeaders(), ['Allow' => true]),
                 ),
-                $exception instanceof PostTooLargeException => $envelope(
-                    ErrorCode::PayloadTooLarge,
-                    'Żądanie jest zbyt duże.',
-                ),
+                $exception instanceof PostTooLargeException => $envelope(ErrorCode::PayloadTooLarge),
                 $exception instanceof TooManyRequestsHttpException => $envelope(
                     ErrorCode::TooManyRequests,
-                    'Zbyt wiele żądań. Spróbuj ponownie za chwilę.',
                     headers: array_intersect_key($exception->getHeaders(), ['Retry-After' => true]),
                 ),
-                $exception instanceof HttpException && $cause instanceof TokenMismatchException => $envelope(
-                    ErrorCode::CsrfMismatch,
-                    'Sesja wygasła. Odśwież stronę i spróbuj ponownie.',
-                ),
+                $exception instanceof HttpException && $cause instanceof TokenMismatchException => $envelope(ErrorCode::CsrfMismatch),
                 $exception instanceof HttpException && $cause instanceof AuthorizationException => $cause->status() === 404
                     ? $notFound()
                     : $forbidden(),
                 $exception instanceof HttpException && $cause instanceof OriginMismatchException => $forbidden(),
                 $exception instanceof HttpException && $exception->getStatusCode() === 503 => $envelope(
                     ErrorCode::ServiceUnavailable,
-                    'Usługa jest chwilowo niedostępna.',
                     headers: array_intersect_key($exception->getHeaders(), ['Retry-After' => true]),
                 ),
                 $exception instanceof HttpException && $exception->getStatusCode() >= 400 && $exception->getStatusCode() < 500 => $envelope(
                     ErrorCode::forHttpStatus($exception->getStatusCode()),
-                    $messageForGeneralCode(ErrorCode::forHttpStatus($exception->getStatusCode())),
                     status: $exception->getStatusCode(),
                 ),
-                default => $envelope(ErrorCode::ServerError, 'Wystąpił błąd serwera.'),
+                default => $envelope(ErrorCode::ServerError),
             };
         });
     })->create();

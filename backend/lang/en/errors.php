@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'UNAUTHENTICATED' => 'No active session. Please sign in.',
+    'FORBIDDEN' => 'You are not allowed to perform this operation.',
+    'NOT_FOUND' => 'Resource not found.',
+    'CSRF_MISMATCH' => 'Your session has expired. Refresh the page and try again.',
+    'VALIDATION_FAILED' => 'The data is invalid.',
+    'TOO_MANY_REQUESTS' => 'Too many requests. Try again in a moment.',
+    'SERVER_ERROR' => 'A server error occurred.',
+    'BAD_REQUEST' => 'Bad request.',
+    'METHOD_NOT_ALLOWED' => 'This HTTP method is not supported for this address.',
+    'PAYLOAD_TOO_LARGE' => 'The request is too large.',
+    'SERVICE_UNAVAILABLE' => 'The service is temporarily unavailable.',
+    'INVALID_CREDENTIALS' => 'Invalid login or password.',
+    'ACCOUNT_INACTIVE' => 'The account is inactive.',
+    'NETWORK_NOT_ALLOWED' => 'Access from this network is not allowed.',
+    'CODE_NOT_FOUND' => 'No position found for the given code.',
+    'ORDER_NOT_DRAFT' => 'The order is no longer a draft.',
+    'ORDER_HAS_NO_POSITIONS' => 'The order has no positions.',
+    'ORDER_HAS_OPEN_SEGMENTS' => 'The order has open work segments.',
+    'ORDER_LOCKED' => 'The order is locked.',
+    'ORDER_NOT_ACTIVE' => 'The order is not active.',
+    'POSITION_COMPLETED' => 'The position is already completed.',
+    'POSITION_HAS_WORK' => 'The position has registered work or consumption.',
+    'ALREADY_WORKING' => 'You are already working on this position.',
+    'NO_OPEN_SEGMENT' => 'There is no open work segment.',
+    'USER_HAS_OPEN_SEGMENT' => 'The worker has an open work segment.',
+    'IDEMPOTENCY_KEY_REUSED' => 'The idempotency key was used with a different request.',
+    'TIME_IN_FUTURE' => 'The time cannot be in the future.',
+    'TIME_BEFORE_POSITION' => 'The time cannot be earlier than the start of the position.',
+    'TIME_TOO_FAR_BACK' => 'The time is outside the allowed range in the past.',
+    'TIME_END_BEFORE_START' => 'The segment end cannot be earlier than its start.',
+    'SEGMENT_OVERLAP' => 'The segment overlaps with your other work.',
+];

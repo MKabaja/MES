@@ -13,13 +13,15 @@ use RuntimeException;
 final class DomainException extends RuntimeException
 {
     /**
-     * Creates an error with a Polish message and an optional field that receives it under `errors`.
+     * Creates an error with the message of its code in the current locale and an optional field that receives it under `errors`.
+     *
+     * @param  array<string, string|int>  $replace
      */
     public function __construct(
         public readonly ErrorCode $errorCode,
-        string $message,
         public readonly ?string $field = null,
+        array $replace = [],
     ) {
-        parent::__construct($message);
+        parent::__construct($errorCode->message($replace));
     }
 }

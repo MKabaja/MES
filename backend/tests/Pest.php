@@ -8,3 +8,5 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(LazilyRefreshDatabase::class)
     ->in('Feature');
+
+pest()->beforeEach(fn () => test()->withHeader('Accept-Language', 'pl'))->in('Feature');

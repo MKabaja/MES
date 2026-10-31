@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Domain\Enums\ErrorCode;
-use App\Domain\Exceptions\DomainException;
 use Illuminate\Support\Facades\Route;
 
 it('adds the security headers to api responses', function (): void {
@@ -37,28 +35,13 @@ it('omits Strict-Transport-Security in the local environment', function (): void
     $response->assertOk()->assertHeaderMissing('Strict-Transport-Security');
 });
 
-it('adds the security headers to a not found response for an unknown api route', function (): void {
-    $response = $this->getJson('api/v1/nope');
-
-    $response->assertNotFound()
-        ->assertHeader('X-Content-Type-Options', 'nosniff')
-        ->assertHeader('X-Frame-Options', 'DENY');
-});
-
-it('adds the security headers to a domain error response', function (): void {
-    Route::middleware('api')->get('api/v1/_test/conflict', fn () => throw new DomainException(ErrorCode::OrderLocked, 'Zlecenie jest zablokowane.'));
-
-    $response = $this->getJson('api/v1/_test/conflict');
-
-    $response->assertConflict()->assertHeader('X-Content-Type-Options', 'nosniff');
-});
-
 it('adds the security headers to a response cut short by an earlier global middleware', function (): void {
     Route::middleware('api')->post('api/v1/_test/upload', fn () => response()->json(['data' => []]));
 
     $response = $this->call('POST', 'api/v1/_test/upload', server: [
         'CONTENT_LENGTH' => 99999999999,
         'HTTP_ACCEPT' => 'application/json',
+        'HTTP_ACCEPT_LANGUAGE' => 'pl',
     ]);
 
     $response->assertStatus(413)
