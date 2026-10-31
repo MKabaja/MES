@@ -76,11 +76,11 @@ final readonly class LoginAction
 
     private function rehashPassword(User $user, string $password, string $verifiedHash): string
     {
-        $boundHash = DB::transaction(function () use ($user, $password, $verifiedHash): string {
+        $rehashedHash = DB::transaction(function () use ($user, $password, $verifiedHash): ?string {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
 
             if ($lockedUser->password !== $verifiedHash) {
-                return $verifiedHash;
+                return null;
             }
 
             $lockedUser->update(['password' => $this->hasher->make($password)]);
@@ -88,8 +88,12 @@ final readonly class LoginAction
             return $lockedUser->password;
         });
 
+        if ($rehashedHash === null) {
+            return $verifiedHash;
+        }
+
         $user->refresh();
 
-        return $boundHash;
+        return $rehashedHash;
     }
 }
