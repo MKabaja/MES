@@ -22,11 +22,17 @@ use Illuminate\Http\Response;
 
 class UserController extends Controller
 {
+    /**
+     * Lists workers with filters and pagination.
+     */
     public function index(ListUsersRequest $request, UserRepository $users): AnonymousResourceCollection
     {
         return PaginatedResponse::make($users->paginateWorkers($request->toFilters()), UserListResource::class);
     }
 
+    /**
+     * Creates a worker account with a generated login.
+     */
     public function store(CreateWorkerRequest $request, CreateWorkerAction $createWorker): JsonResponse
     {
         return (new UserResource($createWorker->handle($request->toData())))
@@ -34,11 +40,17 @@ class UserController extends Controller
             ->setStatusCode(JsonResponse::HTTP_CREATED);
     }
 
+    /**
+     * Updates the data of a worker account.
+     */
     public function update(UpdateWorkerRequest $request, UpdateWorkerAction $updateWorker, int $id): UserResource
     {
         return new UserResource($updateWorker->handle($request->actor(), $id, $request->toData(), $request->ip()));
     }
 
+    /**
+     * Sets a new password for a worker account.
+     */
     public function resetPassword(ResetWorkerPasswordRequest $request, ResetWorkerPasswordAction $resetPassword, int $id): Response
     {
         $resetPassword->handle($request->actor(), $id, $request->newPassword(), $request->ip());
