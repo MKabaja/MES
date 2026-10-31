@@ -7,6 +7,7 @@ use App\Domain\Exceptions\DomainException;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureWorkerNetworkAllowed;
+use App\Http\Middleware\RejectControlCharacters;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocaleFromHeader;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -36,7 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->prepend([SecurityHeaders::class, SetLocaleFromHeader::class]);
+        $middleware->prepend([SecurityHeaders::class, SetLocaleFromHeader::class, RejectControlCharacters::class]);
         $middleware->statefulApi();
         $middleware->alias([
             'active' => EnsureUserIsActive::class,

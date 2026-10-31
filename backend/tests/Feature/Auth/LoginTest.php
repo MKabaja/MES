@@ -179,3 +179,40 @@ it('keeps the limit separate for another login and for another IP', function (st
     'another login' => ['Anowak', '127.0.0.1'],
     'another IP' => ['Jkowal', '10.0.0.2'],
 ]);
+
+it('returns 400 instead of signing in when NUL bytes vary the login to bypass the limit', function (): void {
+    freezeTime();
+    User::factory()->create(['login' => 'Jkowal']);
+    foreach (range(1, 5) as $attempt) {
+        $this->postJson(route('auth.login'), ['login' => "Jkowal\0{$attempt}", 'password' => 'wrong-password'])
+            ->assertBadRequest();
+    }
+
+    $response = $this->postJson(route('auth.login'), ['login' => "Jkowal\x006", 'password' => 'password']);
+
+    $response->assertBadRequest()->assertJsonPath('code', 'BAD_REQUEST');
+    $this->assertGuest('web');
+});
+
+it('returns 422 when the login or password is longer than allowed', function (array $credentials, string $field): void {
+    User::factory()->create(['login' => 'Jkowal']);
+
+    $response = $this->postJson(route('auth.login'), $credentials);
+
+    $response->assertUnprocessable()
+        ->assertJsonPath('code', 'VALIDATION_FAILED')
+        ->assertOnlyJsonValidationErrors([$field]);
+})->with([
+    'login of 31 characters' => [['login' => str_repeat('a', 31), 'password' => 'password'], 'login'],
+    'password of 65 characters' => [['login' => 'Jkowal', 'password' => str_repeat('a', 65)], 'password'],
+]);
+
+it('accepts a login of 30 characters and a password of 64 characters', function (): void {
+    $login = str_repeat('a', 30);
+    $password = str_repeat('b', 64);
+    User::factory()->create(['login' => $login, 'password' => $password]);
+
+    $response = $this->postJson(route('auth.login'), ['login' => $login, 'password' => $password]);
+
+    $response->assertOk();
+});
