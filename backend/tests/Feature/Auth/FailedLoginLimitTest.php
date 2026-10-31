@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\ValueObjects\PlantSettings;
 use App\Models\User;
+use App\Repositories\SettingsRepository;
 
 use function Pest\Laravel\freezeTime;
 use function Pest\Laravel\travel;
@@ -97,6 +99,51 @@ it('accepts logins again once the minute has passed', function (): void {
 
     $response = $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.5'])
         ->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password']);
+
+    $response->assertOk();
+});
+
+it('does not count correct passwords of disabled accounts towards the limit', function (): void {
+    freezeTime();
+    $disabledWorkers = User::factory()->inactive()->count(25)->sequence(fn ($sequence) => ['login' => "Disabled{$sequence->index}"])->create();
+    User::factory()->create(['login' => 'Jkowal']);
+    foreach ($disabledWorkers as $disabledWorker) {
+        $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.5'])
+            ->postJson(route('auth.login'), ['login' => $disabledWorker->login, 'password' => 'password'])
+            ->assertForbidden();
+    }
+
+    $response = $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.5'])
+        ->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password']);
+
+    $response->assertOk();
+});
+
+it('does not count correct passwords of workers outside the allowed networks towards the limit', function (): void {
+    freezeTime();
+    $settings = resolve(SettingsRepository::class);
+    $current = $settings->current();
+    $settings->save(new PlantSettings(
+        shiftStart: $current->shiftStart,
+        shiftEnd: $current->shiftEnd,
+        breaks: $current->breaks,
+        deductBreaks: $current->deductBreaks,
+        autoPauseEnabled: $current->autoPauseEnabled,
+        workerBackdateDays: $current->workerBackdateDays,
+        stationIdleLogoutMinutes: $current->stationIdleLogoutMinutes,
+        workerNetworkRestrictionEnabled: true,
+        workerAllowedNetworks: ['192.168.1.0/24'],
+    ));
+    $workers = User::factory()->worker()->count(25)->sequence(fn ($sequence) => ['login' => "Worker{$sequence->index}"])->create();
+    User::factory()->admin()->create(['login' => 'Admin']);
+    foreach ($workers as $worker) {
+        $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.5'])
+            ->postJson(route('auth.login'), ['login' => $worker->login, 'password' => 'password'])
+            ->assertForbidden();
+    }
+
+    $response = $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.5'])
+        ->postJson(route('auth.login'), ['login' => 'Admin', 'password' => 'password']);
 
     $response->assertOk();
 });
