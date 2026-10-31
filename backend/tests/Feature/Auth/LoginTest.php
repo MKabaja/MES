@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Models\User;
 use App\Support\Auth\DummyPasswordHash;
 use Illuminate\Contracts\Hashing\Hasher;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 use function Pest\Laravel\freezeTime;
 use function Pest\Laravel\travelTo;
@@ -217,4 +219,50 @@ it('accepts a login of 30 characters and a password of 64 characters', function 
     $response = $this->postJson(route('auth.login'), ['login' => $login, 'password' => $password]);
 
     $response->assertOk();
+});
+
+it('destroys the previous session record when another user logs in on the same browser', function (): void {
+    config(['session.driver' => 'database']);
+    User::factory()->create(['login' => 'Jkowal']);
+    $otherUser = User::factory()->create(['login' => 'Anowak']);
+    $this->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password'])->assertOk();
+    $sessionIdOfFirstLogin = session()->getId();
+    $this->assertDatabaseHas('sessions', ['id' => $sessionIdOfFirstLogin]);
+
+    $response = $this->withCredentials()->withCookie(config('session.cookie'), $sessionIdOfFirstLogin)
+        ->postJson(route('auth.login'), ['login' => 'Anowak', 'password' => 'password']);
+
+    $response->assertOk()->assertJsonPath('data.id', $otherUser->id);
+    $this->assertDatabaseMissing('sessions', ['id' => $sessionIdOfFirstLogin]);
+});
+
+it('sends the session cookie only over HTTPS outside the local environment', function (): void {
+    User::factory()->create(['login' => 'Jkowal']);
+
+    $response = $this->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password']);
+
+    $response->assertOk();
+    expect($response->getCookie(config('session.cookie'), decrypt: false)?->isSecure())->toBeTrue();
+});
+
+it('rehashes the password with the current cost after a successful login', function (): void {
+    $user = User::factory()->create(['login' => 'Jkowal']);
+    DB::table('users')->where('id', $user->id)->update(['password' => Hash::make('password', ['rounds' => 5])]);
+
+    $response = $this->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password']);
+
+    $response->assertOk();
+    $newHash = $user->fresh()->password;
+    expect(password_get_info($newHash)['options'])->toBe(['cost' => 4])
+        ->and(Hash::check('password', $newHash))->toBeTrue();
+});
+
+it('keeps the password hash when it already uses the current cost', function (): void {
+    $user = User::factory()->create(['login' => 'Jkowal']);
+    $hashBeforeLogin = $user->password;
+
+    $response = $this->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password']);
+
+    $response->assertOk();
+    expect($user->fresh()->password)->toBe($hashBeforeLogin);
 });

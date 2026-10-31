@@ -25,11 +25,15 @@ it('returns 403 ACCOUNT_INACTIVE and ends the session when the account is disabl
     $this->getJson(route('auth.me'))->assertUnauthorized();
 });
 
-it('returns 403 ACCOUNT_INACTIVE when a disabled user tries to sign out', function (): void {
-    $user = User::factory()->admin()->inactive()->create();
+it('signs out a user whose account was disabled during the session with 204', function (): void {
+    $user = User::factory()->create(['login' => 'Jkowal']);
+    $this->postJson(route('auth.login'), ['login' => 'Jkowal', 'password' => 'password'])->assertOk();
+    $user->update(['is_active' => false]);
 
-    $response = $this->actingAs($user, 'web')->postJson(route('auth.logout'));
+    $response = $this->postJson(route('auth.logout'));
 
-    $response->assertForbidden()->assertJsonPath('code', 'ACCOUNT_INACTIVE');
+    $response->assertNoContent();
     $this->assertGuest('web');
+    app('auth')->forgetGuards();
+    $this->getJson(route('auth.me'))->assertUnauthorized();
 });
