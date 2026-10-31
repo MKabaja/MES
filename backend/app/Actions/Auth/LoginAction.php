@@ -39,6 +39,12 @@ final readonly class LoginAction
     {
         $this->failedLoginLimiter->registerAttempt($ip);
 
+        $isCountedAgainstAccount = ! $this->networkAccess->isInsideAllowedNetworks($ip, $this->settings->current());
+
+        if ($isCountedAgainstAccount) {
+            $this->failedLoginLimiter->registerAccountAttempt($credentials->login);
+        }
+
         $user = User::query()
             ->whereLoginIs($credentials->login)
             ->first();
@@ -57,6 +63,10 @@ final readonly class LoginAction
         }
 
         $this->networkAccess->assertAllowed($user, $ip, $this->settings->current());
+
+        if ($isCountedAgainstAccount) {
+            $this->failedLoginLimiter->releaseAccountAttempt($credentials->login);
+        }
 
         $verifiedHash = $user->password;
 
