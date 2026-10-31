@@ -22,7 +22,7 @@ return new class extends Migration
             $table->smallInteger('station_idle_logout_minutes');
             $table->boolean('worker_network_restriction_enabled');
             $table->jsonb('worker_allowed_networks');
-            $table->timestamp('updated_at')->nullable();
+            $table->timestampTz('updated_at')->nullable();
         });
 
         DB::statement('ALTER TABLE settings ADD CONSTRAINT settings_single_row CHECK (id = 1)');
