@@ -165,6 +165,7 @@ return [
     'password_too_many_bytes' => 'Pole :attribute może mieć najwyżej 72 bajty (znaki spoza ASCII zajmują kilka bajtów).',
     'password_blank' => 'Pole :attribute nie może składać się wyłącznie z białych lub niewidocznych znaków.',
     'person_name_invisible' => 'Pole :attribute nie może zawierać znaków sterujących ani niewidocznych.',
+    'login_characters' => 'Pole :attribute nie może zawierać białych, sterujących ani niewidocznych znaków.',
     'break_overlap' => 'Przerwy nie mogą się nakładać.',
 
     'custom' => [
@@ -199,6 +200,7 @@ return [
         'status' => 'status',
         'page' => 'strona',
         'per_page' => 'liczba na stronie',
+        'password_confirmation' => 'powtórzenie hasła',
         'password' => 'hasło',
         'shift_start' => 'początek zmiany',
         'shift_end' => 'koniec zmiany',
