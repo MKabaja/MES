@@ -12,7 +12,7 @@ Route::prefix('v1')->group(function (): void {
         ->name('auth.login');
 
     Route::post('auth/logout', [AuthController::class, 'logout'])
-        ->middleware(['auth:sanctum', 'active'])
+        ->middleware('auth:sanctum')
         ->name('auth.logout');
 
     Route::middleware(['auth:sanctum', 'active', 'network'])->group(function (): void {

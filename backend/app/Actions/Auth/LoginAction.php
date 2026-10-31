@@ -56,8 +56,12 @@ final readonly class LoginAction
 
         $this->networkAccess->assertAllowed($user, $ip, $this->settings->current());
 
+        if ($this->hasher->needsRehash($user->password)) {
+            $user->update(['password' => $credentials->password]);
+        }
+
         $this->guard->login($user);
-        $session->regenerate();
+        $session->regenerate(destroy: true);
 
         return $user;
     }
