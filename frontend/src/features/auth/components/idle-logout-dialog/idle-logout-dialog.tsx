@@ -36,12 +36,13 @@ export function IdleLogoutDialog({
 				role="alertdialog"
 				title={t('auth.idleLogout.title')}
 				initialFocus={stayButtonRef}
+				density="terminal"
 			>
 				<DialogDescription>
 					{t('auth.idleLogout.description', { seconds: secondsLeft })}
 				</DialogDescription>
 				<DialogFooter>
-					<Button ref={stayButtonRef} onClick={onStay}>
+					<Button ref={stayButtonRef} size="terminal" onClick={onStay}>
 						{t('auth.idleLogout.stay')}
 					</Button>
 				</DialogFooter>
