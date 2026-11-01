@@ -1,32 +1,44 @@
-import { useNavigate, useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
+import { HttpError } from '@/shared/api/http-error';
 import { getErrorMessage } from '@/shared/i18n/error-message';
-import { useLogout } from '../api/use-logout';
+import { getSessionEnding } from '../api/session-ending';
+import { useSessionEndingState } from './use-session-ending-state';
 
-export type SignOutState = {
+export type SignOutControls = {
 	signOut: () => void;
+	signOutIdleStation: () => void;
 	isSigningOut: boolean;
 };
 
 /**
  * Signs the user out and replaces the current page with `/login` (without `redirect`, so the next person at a shared device does not land on this page).
  *
- * A failure other than a lost session shows the server message as a toast and keeps the user on the page.
+ * - `signOut`: a failure other than a lost connection shows the server message as a toast and keeps the user on the page.
+ * - `signOutIdleStation`: hides the data at once and keeps retrying until the server confirms the logout.
  */
-export function useSignOut(): SignOutState {
-	const navigate = useNavigate();
-	const router = useRouter();
-	const logout = useLogout();
+export function useSignOut(): SignOutControls {
+	const sessionEnding = getSessionEnding();
+	const sessionEndingState = useSessionEndingState();
 
 	function signOut(): void {
-		logout.mutate(undefined, {
-			onSuccess: () => {
-				router.clearCache();
-				return navigate({ to: '/login', replace: true });
-			},
-			onError: (error) => toast.error(getErrorMessage(error)),
-		});
+		sessionEnding.signOut().catch(showSignOutError);
 	}
 
-	return { signOut, isSigningOut: logout.isPending };
+	function signOutIdleStation(): void {
+		sessionEnding.forceSignOut();
+	}
+
+	return {
+		signOut,
+		signOutIdleStation,
+		isSigningOut:
+			sessionEndingState.status === 'signingOut' ||
+			sessionEndingState.status === 'leaving',
+	};
+}
+
+function showSignOutError(error: unknown): void {
+	if (error instanceof HttpError) {
+		toast.error(getErrorMessage(error));
+	}
 }

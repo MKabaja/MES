@@ -514,3 +514,175 @@ describe('logout', () => {
 		expect(screen.getByRole('button', { name: 'Wyloguj' })).toBeEnabled();
 	});
 });
+
+describe('logout waiting for the server', () => {
+	function goOnline() {
+		act(() => {
+			window.dispatchEvent(new Event('online'));
+		});
+	}
+
+	function failLogoutOnceWithoutNetwork() {
+		const logoutRequests = vi.fn();
+		server.use(
+			mswHttp.post('*/api/v1/auth/logout', () => {
+				logoutRequests();
+				return logoutRequests.mock.calls.length === 1
+					? HttpResponse.error()
+					: new HttpResponse(null, { status: 204 });
+			}),
+		);
+		return logoutRequests;
+	}
+
+	async function signOutWithoutNetwork() {
+		signInAs('worker');
+		const logoutRequests = failLogoutOnceWithoutNetwork();
+		const rendered = await renderWithProviders(undefined, { route: '/hala' });
+		await screen.findByRole('heading', { name: 'Hala' });
+		rendered.queryClient.setQueryData(['hall', 'orders'], [{ id: 1 }]);
+		await rendered.user.click(screen.getByRole('button', { name: 'Wyloguj' }));
+		await screen.findByText('Wylogowywanie…');
+		return { ...rendered, logoutRequests };
+	}
+
+	it('hides the data behind a signing-out screen while there is no network', async () => {
+		const { queryClient } = await signOutWithoutNetwork();
+
+		expect(screen.getByRole('status')).toHaveTextContent(
+			'Brak połączenia. Ponawiamy próbę.',
+		);
+		expect(screen.queryByRole('heading', { name: 'Hala' })).toBeNull();
+		expect(screen.queryByText('Jan Kowalski')).toBeNull();
+		expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
+	});
+
+	it('finishes the logout as soon as the network comes back', async () => {
+		const { router, logoutRequests } = await signOutWithoutNetwork();
+
+		goOnline();
+
+		expect(
+			await screen.findByRole('heading', { name: 'Zaloguj się' }),
+		).toBeInTheDocument();
+		expect(router.state.location.search).toEqual({});
+		expect(logoutRequests).toHaveBeenCalledTimes(2);
+		expect(screen.queryByText('Wylogowywanie…')).toBeNull();
+	});
+
+	it('retries the logout after 30 seconds', async () => {
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		const { logoutRequests } = await signOutWithoutNetwork();
+
+		await act(() => vi.advanceTimersByTimeAsync(29_000));
+		expect(logoutRequests).toHaveBeenCalledTimes(1);
+
+		await act(() => vi.advanceTimersByTimeAsync(1000));
+		expect(
+			await screen.findByRole('heading', { name: 'Zaloguj się' }),
+		).toBeInTheDocument();
+		expect(logoutRequests).toHaveBeenCalledTimes(2);
+	});
+
+	it('keeps the signing-out screen and skips the session check on navigation', async () => {
+		const rendered = await signOutWithoutNetwork();
+		const meRequests = vi.fn();
+		server.use(
+			mswHttp.get('*/api/v1/auth/me', () => {
+				meRequests();
+				return HttpResponse.json({ data: buildUser() });
+			}),
+		);
+
+		await act(() => rendered.router.navigate({ to: '/hala' }));
+		act(() => rendered.router.history.back());
+
+		expect(screen.getByText('Wylogowywanie…')).toBeInTheDocument();
+		expect(screen.queryByRole('heading', { name: 'Hala' })).toBeNull();
+		expect(meRequests).not.toHaveBeenCalled();
+	});
+
+	it('leaves to login when the retried logout answers 401', async () => {
+		await signOutWithoutNetwork();
+		server.use(
+			mswHttp.post('*/api/v1/auth/logout', () =>
+				errorResponse(401, 'UNAUTHENTICATED', 'Brak aktywnej sesji.'),
+			),
+		);
+
+		goOnline();
+
+		expect(
+			await screen.findByRole('heading', { name: 'Zaloguj się' }),
+		).toBeInTheDocument();
+	});
+
+	it('never sends two logout requests at once', async () => {
+		signInAs('worker');
+		const secondAttempt = createGate();
+		let logoutAttempts = 0;
+		let runningLogouts = 0;
+		let mostRunningLogouts = 0;
+		server.use(
+			mswHttp.post('*/api/v1/auth/logout', async () => {
+				logoutAttempts += 1;
+				runningLogouts += 1;
+				mostRunningLogouts = Math.max(mostRunningLogouts, runningLogouts);
+				if (logoutAttempts === 2) {
+					await secondAttempt.promise;
+				}
+				runningLogouts -= 1;
+				return logoutAttempts === 3
+					? new HttpResponse(null, { status: 204 })
+					: HttpResponse.error();
+			}),
+		);
+		const { user } = await renderWithProviders(undefined, { route: '/hala' });
+		await screen.findByRole('heading', { name: 'Hala' });
+		await user.click(screen.getByRole('button', { name: 'Wyloguj' }));
+		await screen.findByText('Wylogowywanie…');
+
+		goOnline();
+		goOnline();
+		goOnline();
+		secondAttempt.open();
+
+		expect(
+			await screen.findByRole('heading', { name: 'Zaloguj się' }),
+		).toBeInTheDocument();
+		expect(mostRunningLogouts).toBe(1);
+		expect(logoutAttempts).toBe(3);
+	});
+
+	it('hides the data of a rejected session before the slow logout finishes', async () => {
+		signInAs('worker');
+		const logoutResponse = createGate();
+		server.use(
+			mswHttp.get('*/api/v1/orders', () =>
+				errorResponse(
+					403,
+					'NETWORK_NOT_ALLOWED',
+					'Dostęp z tej sieci jest niedozwolony.',
+				),
+			),
+			mswHttp.post('*/api/v1/auth/logout', async () => {
+				await logoutResponse.promise;
+				return new HttpResponse(null, { status: 204 });
+			}),
+		);
+		const rendered = await renderWithProviders(undefined, { route: '/hala' });
+		await screen.findByRole('heading', { name: 'Hala' });
+
+		await requestFromApp(rendered);
+
+		expect(screen.getByText('Wylogowywanie…')).toBeInTheDocument();
+		expect(screen.queryByRole('heading', { name: 'Hala' })).toBeNull();
+		expect(rendered.queryClient.getQueryCache().getAll()).toHaveLength(0);
+
+		logoutResponse.open();
+
+		expect(await screen.findByRole('alert')).toHaveTextContent(
+			'Dostęp z tej sieci jest niedozwolony.',
+		);
+	});
+});

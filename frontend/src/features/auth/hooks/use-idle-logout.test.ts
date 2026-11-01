@@ -41,18 +41,12 @@ describe('useIdleLogout', () => {
 		expect(onTimeout).toHaveBeenCalledTimes(1);
 	});
 
-	it('retries the timeout every 30 seconds until the user stays', () => {
-		const { onTimeout, result } = setup({ idleMinutes: 1 });
-		advance(MINUTE);
+	it('times out only once until the user stays', () => {
+		const { onTimeout } = setup({ idleMinutes: 1 });
 
-		advance(29 * SECOND);
+		advance(10 * MINUTE);
+
 		expect(onTimeout).toHaveBeenCalledTimes(1);
-		advance(SECOND);
-		expect(onTimeout).toHaveBeenCalledTimes(2);
-
-		act(() => result.current.stayLoggedIn());
-		advance(59 * SECOND);
-		expect(onTimeout).toHaveBeenCalledTimes(2);
 	});
 
 	it('times out again after a full idle time once the user stayed after a timeout', () => {

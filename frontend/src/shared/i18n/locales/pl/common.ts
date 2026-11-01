@@ -77,5 +77,9 @@ export const common = {
 			description: 'Za {{seconds}} s nastąpi wylogowanie.',
 			stay: 'Zostaję zalogowany',
 		},
+		signingOut: {
+			title: 'Wylogowywanie…',
+			offline: 'Brak połączenia. Ponawiamy próbę.',
+		},
 	},
 };

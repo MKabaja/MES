@@ -23,7 +23,7 @@ afterEach(() => {
 });
 
 describe('HallLayout on a station', () => {
-	it('signs out an idle station and retries until the logout succeeds', async () => {
+	it('hides the idle station behind the signing-out screen and retries until the logout succeeds', async () => {
 		let logoutAttempts = 0;
 		server.use(
 			http.post('*/api/v1/auth/logout', () => {
@@ -38,7 +38,8 @@ describe('HallLayout on a station', () => {
 
 		await act(() => vi.advanceTimersByTimeAsync(60_000));
 		expect(logoutAttempts).toBe(1);
-		expect(screen.queryByRole('heading', { name: 'Zaloguj się' })).toBeNull();
+		expect(screen.getByText('Wylogowywanie…')).toBeInTheDocument();
+		expect(screen.queryByRole('heading', { name: 'Hala' })).toBeNull();
 
 		await act(() => vi.advanceTimersByTimeAsync(30_000));
 

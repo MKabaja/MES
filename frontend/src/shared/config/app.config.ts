@@ -62,6 +62,8 @@ export const config = {
 	station: {
 		idleLogoutFallbackMinutes: 5,
 		idleWarningSeconds: 30,
-		signOutRetrySeconds: 30,
+	},
+	session: {
+		logoutRetrySeconds: 30,
 	},
 } as const;

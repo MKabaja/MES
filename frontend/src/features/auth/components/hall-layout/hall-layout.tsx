@@ -10,7 +10,7 @@ export type HallLayoutProps = { user: User; children: ReactNode };
  * Wraps hall pages in the terminal top bar for `user` and wires its logout button.
  */
 export function HallLayout({ user, children }: HallLayoutProps) {
-	const { signOut, isSigningOut } = useSignOut();
+	const { signOut, signOutIdleStation, isSigningOut } = useSignOut();
 
 	return (
 		<TerminalShell
@@ -19,7 +19,7 @@ export function HallLayout({ user, children }: HallLayoutProps) {
 			isLoggingOut={isSigningOut}
 		>
 			{children}
-			<StationIdleLogout onTimeout={signOut} />
+			<StationIdleLogout onTimeout={signOutIdleStation} />
 		</TerminalShell>
 	);
 }

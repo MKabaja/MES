@@ -80,5 +80,9 @@ export const common: typeof polishCommon = {
 			description: 'You will be signed out in {{seconds}} s.',
 			stay: 'Keep me signed in',
 		},
+		signingOut: {
+			title: 'Signing out…',
+			offline: 'No connection. Retrying.',
+		},
 	},
 };

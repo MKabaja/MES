@@ -7,8 +7,6 @@ import {
 
 const WARNING_MILLISECONDS =
 	config.station.idleWarningSeconds * MILLISECONDS_PER_SECOND;
-const RETRY_MILLISECONDS =
-	config.station.signOutRetrySeconds * MILLISECONDS_PER_SECOND;
 const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'touchstart'] as const;
 
 export type IdleLogoutState =
@@ -29,8 +27,7 @@ export type IdleLogoutControls = {
 const ACTIVE_STATE: IdleLogoutState = { status: 'active' };
 
 /**
- * Tracks inactivity (`pointerdown`, `keydown`, `touchstart`) and calls `onTimeout` after `idleMinutes` without it.
- * If the user is still on the page afterwards (logout failed), `onTimeout` is called again every 30 s until `stayLoggedIn`.
+ * Tracks inactivity (`pointerdown`, `keydown`, `touchstart`) and calls `onTimeout` once after `idleMinutes` without it; `stayLoggedIn` starts a new idle period.
  * Switches to `warning` for the last 30 s; from then only `stayLoggedIn` extends the session, other activity is ignored.
  * The deadline is a timestamp, so a throttled background tab still times out as soon as it wakes up. Does nothing while `enabled` is false.
  */
@@ -51,16 +48,15 @@ export function useIdleLogout({
 		}
 
 		function evaluateDeadline(): void {
+			if (hasTimedOutRef.current) {
+				return;
+			}
 			const remainingMilliseconds =
 				deadlineMillisecondsRef.current - Date.now();
 			if (remainingMilliseconds <= 0) {
 				hasTimedOutRef.current = true;
-				deadlineMillisecondsRef.current = Date.now() + RETRY_MILLISECONDS;
 				setState({ status: 'warning', secondsLeft: 0 });
 				handleTimeout();
-				return;
-			}
-			if (hasTimedOutRef.current) {
 				return;
 			}
 			setState(
