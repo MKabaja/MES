@@ -22,6 +22,8 @@ export type SessionEndingState =
 export type SessionEndingDependencies = {
 	queryClient: QueryClient;
 	router: AnyRouter;
+	/** Runs once the server confirms a logout, before leaving for `/login`. */
+	onServerLogoutConfirmed: () => void;
 };
 
 export type SessionEnding = {
@@ -30,6 +32,7 @@ export type SessionEnding = {
 	signOut: () => Promise<void>;
 	forceSignOut: (sessionEndedMessage?: string) => void;
 	expireSession: () => Promise<void>;
+	dropSession: () => Promise<void>;
 	dispose: () => void;
 };
 
@@ -46,7 +49,7 @@ let currentSessionEnding: SessionEnding | null = null;
  *
  * - `signOut`: one logout attempt; rejects with `HttpError` on a failure other than a lost connection.
  * - `forceSignOut` and a lost connection: hide the data at once and retry the logout every `config.session.logoutRetrySeconds` and on `online` until the server confirms.
- * - `expireSession` (`401`): moves to `/login?redirect=<current path>`; later calls are ignored until `me` holds a user again.
+ * - `expireSession` (`401`, with `redirect=<current path>`) and `dropSession` (ended in another tab): move to `/login` without a logout request; late calls are ignored until `me` holds a user again.
  */
 export function startSessionEnding(
 	dependencies: SessionEndingDependencies,
@@ -80,6 +83,7 @@ export function isServerLogoutPending(): boolean {
 function createSessionEnding({
 	queryClient,
 	router,
+	onServerLogoutConfirmed,
 }: SessionEndingDependencies): SessionEnding {
 	let state = ACTIVE_STATE;
 	let sessionEndedMessage: string | undefined;
@@ -135,6 +139,19 @@ function createSessionEnding({
 		}
 	}
 
+	async function dropSession(): Promise<void> {
+		if (state.status !== 'active') {
+			return;
+		}
+		setState(LEAVING_STATE);
+		clearSessionData();
+		try {
+			await router.navigate({ to: LOGIN_PATH, replace: true });
+		} finally {
+			finishEnding();
+		}
+	}
+
 	async function attemptLogout(): Promise<HttpError | null> {
 		if (isRequestRunning) {
 			isRetryRequested = true;
@@ -148,6 +165,7 @@ function createSessionEnding({
 			return null;
 		}
 		if (outcome.status === 'signedOut') {
+			onServerLogoutConfirmed();
 			await leaveSession();
 			return null;
 		}
@@ -258,6 +276,7 @@ function createSessionEnding({
 		signOut,
 		forceSignOut,
 		expireSession,
+		dropSession,
 		dispose,
 	};
 }

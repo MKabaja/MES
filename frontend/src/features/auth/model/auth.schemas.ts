@@ -24,3 +24,8 @@ export const loginFormSchema = z.object({
 export const loginSearchSchema = z.object({
 	redirect: z.string().optional().catch(undefined),
 });
+
+export const sessionBroadcastMessageSchema = z.discriminatedUnion('type', [
+	z.object({ type: z.literal('ended') }),
+	z.object({ type: z.literal('signedIn'), userId: idSchema }),
+]);

@@ -1,7 +1,11 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
-import { afterAll, afterEach, beforeAll, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 import { i18n } from '@/shared/i18n/i18n';
+import {
+	closeFakeBroadcastChannels,
+	FakeBroadcastChannel,
+} from './broadcast-channel';
 import { server } from './msw/server';
 
 beforeAll(() => {
@@ -12,6 +16,11 @@ beforeAll(() => {
 		addEventListener: () => {},
 		removeEventListener: () => {},
 	}));
+});
+
+beforeEach(() => {
+	closeFakeBroadcastChannels();
+	vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
 });
 
 afterEach(async () => {

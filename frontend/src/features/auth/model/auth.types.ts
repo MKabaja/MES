@@ -1,5 +1,10 @@
 import type { z } from 'zod';
-import type { loginFormSchema, roleSchema, userSchema } from './auth.schemas';
+import type {
+	loginFormSchema,
+	roleSchema,
+	sessionBroadcastMessageSchema,
+	userSchema,
+} from './auth.schemas';
 
 export type Role = z.infer<typeof roleSchema>;
 
@@ -11,6 +16,10 @@ export type LoginCredentials = {
 };
 
 export type LoginFormValues = z.infer<typeof loginFormSchema>;
+
+export type SessionBroadcastMessage = z.infer<
+	typeof sessionBroadcastMessageSchema
+>;
 
 declare module '@tanstack/history' {
 	interface HistoryState {

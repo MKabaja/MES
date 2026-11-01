@@ -8,6 +8,7 @@ import { getErrorMessage } from '@/shared/i18n/error-message';
 import { authQueries } from '../api/auth.queries';
 import { LOGIN_PATH } from '../model/auth.constants';
 import { startSessionEnding } from './session-ending';
+import { announceSessionEnded, startSessionSync } from './session-sync';
 
 export type SessionHandlersDependencies = {
 	queryClient: QueryClient;
@@ -25,7 +26,12 @@ export function registerSessionHandlers({
 	queryClient,
 	router,
 }: SessionHandlersDependencies): void {
-	const sessionEnding = startSessionEnding({ queryClient, router });
+	const sessionEnding = startSessionEnding({
+		queryClient,
+		router,
+		onServerLogoutConfirmed: announceSessionEnded,
+	});
+	startSessionSync({ queryClient, sessionEnding });
 
 	function isOnLoginPage(): boolean {
 		return router.state.location.pathname === LOGIN_PATH;
