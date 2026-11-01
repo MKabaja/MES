@@ -35,9 +35,9 @@ function signOutOnServer() {
 	return meRequests;
 }
 
-async function requestFromApp(
+function sendOrdersRequests(
 	{ queryClient }: RenderWithProvidersResult,
-	concurrentRequests = 1,
+	concurrentRequests: number,
 ) {
 	const requests = Array.from({ length: concurrentRequests }, (_, index) =>
 		queryClient
@@ -47,9 +47,24 @@ async function requestFromApp(
 			})
 			.catch(() => undefined),
 	);
+	return Promise.all(requests);
+}
+
+async function requestFromApp(
+	rendered: RenderWithProvidersResult,
+	concurrentRequests = 1,
+) {
 	await act(async () => {
-		await Promise.all(requests);
+		await sendOrdersRequests(rendered, concurrentRequests);
 	});
+}
+
+function createGate() {
+	let open = () => {};
+	const promise = new Promise<void>((resolve) => {
+		open = resolve;
+	});
+	return { promise, open };
 }
 
 describe('guest', () => {
@@ -228,10 +243,15 @@ describe('session lost during work', () => {
 	});
 
 	it('shows the server message when the session check itself is rejected', async () => {
+		const logoutRequests = vi.fn();
 		server.use(
 			mswHttp.get('*/api/v1/auth/me', () =>
 				errorResponse(403, 'ACCOUNT_INACTIVE', 'Konto jest nieaktywne.'),
 			),
+			mswHttp.post('*/api/v1/auth/logout', () => {
+				logoutRequests();
+				return new HttpResponse(null, { status: 204 });
+			}),
 		);
 
 		const { router } = await renderWithProviders(undefined, {
@@ -242,6 +262,7 @@ describe('session lost during work', () => {
 			'Konto jest nieaktywne.',
 		);
 		expect(router.state.location.pathname).toBe('/login');
+		await waitFor(() => expect(logoutRequests).toHaveBeenCalledTimes(1));
 	});
 });
 
@@ -306,6 +327,92 @@ describe('session rejected in several requests at once', () => {
 			'Nieprawidłowy login lub hasło.',
 		);
 		expect(screen.getAllByRole('alert')).toHaveLength(1);
+	});
+
+	it('ignores a rejection that arrives after the session has already ended', async () => {
+		signInAs('worker');
+		const logoutRequests = vi.fn();
+		const lateRejection = createGate();
+		const sessionCheck = createGate();
+		let ordersRequestCount = 0;
+		server.use(
+			mswHttp.get('*/api/v1/orders', async () => {
+				ordersRequestCount += 1;
+				if (ordersRequestCount > 1) {
+					await lateRejection.promise;
+				}
+				return errorResponse(
+					403,
+					'NETWORK_NOT_ALLOWED',
+					'Dostęp z tej sieci jest niedozwolony.',
+				);
+			}),
+			mswHttp.post('*/api/v1/auth/logout', () => {
+				logoutRequests();
+				return new HttpResponse(null, { status: 204 });
+			}),
+		);
+		const rendered = await renderWithProviders(undefined, { route: '/hala' });
+		await screen.findByRole('heading', { name: 'Hala' });
+		const ordersRequests = sendOrdersRequests(rendered, 2);
+		await screen.findByText('Dostęp z tej sieci jest niedozwolony.');
+		server.use(
+			mswHttp.get('*/api/v1/auth/me', async () => {
+				await sessionCheck.promise;
+				return errorResponse(401, 'UNAUTHENTICATED', 'Brak aktywnej sesji.');
+			}),
+		);
+
+		act(() => rendered.router.history.push('/hala'));
+		await waitFor(() =>
+			expect(rendered.router.state.location.pathname).toBe('/hala'),
+		);
+		lateRejection.open();
+		await act(() => ordersRequests);
+		sessionCheck.open();
+
+		await waitFor(() =>
+			expect(rendered.router.state.location.search).toEqual({
+				redirect: '/hala',
+			}),
+		);
+		expect(logoutRequests).toHaveBeenCalledTimes(1);
+	});
+
+	it('signs out again when the next session is rejected after signing in', async () => {
+		signInAs('worker');
+		const logoutRequests = vi.fn();
+		server.use(
+			mswHttp.get('*/api/v1/orders', () =>
+				errorResponse(
+					403,
+					'NETWORK_NOT_ALLOWED',
+					'Dostęp z tej sieci jest niedozwolony.',
+				),
+			),
+			mswHttp.post('*/api/v1/auth/logout', () => {
+				logoutRequests();
+				return new HttpResponse(null, { status: 204 });
+			}),
+		);
+		const rendered = await renderWithProviders(undefined, { route: '/hala' });
+		await screen.findByRole('heading', { name: 'Hala' });
+		await requestFromApp(rendered);
+		await screen.findByText('Dostęp z tej sieci jest niedozwolony.');
+		await rendered.user.type(screen.getByLabelText('Login'), 'Jkowal');
+		await rendered.user.type(screen.getByLabelText('Hasło'), '1234');
+		await rendered.user.click(
+			screen.getByRole('button', { name: 'Zaloguj się' }),
+		);
+		await screen.findByRole('heading', { name: 'Hala' });
+
+		await requestFromApp(rendered);
+
+		expect(await screen.findByRole('alert')).toHaveTextContent(
+			'Dostęp z tej sieci jest niedozwolony.',
+		);
+		expect(rendered.router.state.location.pathname).toBe('/login');
+		expect(logoutRequests).toHaveBeenCalledTimes(2);
 	});
 });
 
