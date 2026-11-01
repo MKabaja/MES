@@ -22,7 +22,7 @@ export type LoginFormState = {
 /**
  * Drives the login form: local validation, the sign-in request and the redirect after success.
  * A successful sign-in drops the router cache and all toasts left from the previous session.
- * A submit while the previous one is still validating or signing in is ignored.
+ * A failed sign-in clears and hides the password; a submit while the previous one is still validating or signing in is ignored.
  *
  * `redirect` is followed only when it is a same-origin relative path, otherwise the user lands on `/`.
  */
@@ -46,6 +46,10 @@ export function useLoginForm(
 				router.clearCache();
 				toast.dismiss();
 				return navigate({ href: getSafeRedirectPath(redirect), replace: true });
+			},
+			onError: () => {
+				form.resetField('password');
+				setIsPasswordVisible(false);
 			},
 		});
 	});

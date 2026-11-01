@@ -115,6 +115,25 @@ describe('login screen', () => {
 		expect(router.state.location.pathname).toBe('/login');
 	});
 
+	it('clears and hides the password after a failed sign-in', async () => {
+		failLoginWith({
+			status: 401,
+			code: 'INVALID_CREDENTIALS',
+			message: 'Nieprawidłowy login lub hasło.',
+		});
+		const { user } = await setup();
+		await user.type(screen.getByLabelText('Login'), 'Jkowal');
+		await user.type(screen.getByLabelText('Hasło'), '1234');
+		await user.click(screen.getByRole('button', { name: 'Pokaż hasło' }));
+
+		await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+
+		await screen.findByRole('alert');
+		expect(screen.getByLabelText('Hasło')).toHaveValue('');
+		expect(screen.getByLabelText('Hasło')).toHaveAttribute('type', 'password');
+		expect(screen.getByLabelText('Login')).toHaveValue('Jkowal');
+	});
+
 	it('reveals the password on demand', async () => {
 		const { user } = await setup();
 		const password = screen.getByLabelText('Hasło');
@@ -194,6 +213,7 @@ describe('login screen', () => {
 		await screen.findByRole('alert');
 
 		await user.clear(screen.getByLabelText('Login'));
+		await user.type(screen.getByLabelText('Hasło'), '1234');
 		await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
 
 		expect(await screen.findByText('Podaj login.')).toBeInTheDocument();
