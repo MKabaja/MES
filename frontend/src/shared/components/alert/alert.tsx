@@ -5,7 +5,7 @@ import { alertStyles, alertVariants } from './alert.styles';
 import type { AlertVariant } from './alert.types';
 
 export type AlertProps = Omit<ComponentProps<'div'>, 'children'> & {
-	variant?: AlertVariant;
+	variant?: AlertVariant | undefined;
 	children: ReactNode;
 };
 

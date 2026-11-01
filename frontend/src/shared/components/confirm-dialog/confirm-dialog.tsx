@@ -11,8 +11,8 @@ export type ConfirmDialogProps = {
 	description: string;
 	confirmLabel: string;
 	onConfirm: () => void;
-	variant?: 'default' | 'danger';
-	pending?: boolean;
+	variant?: 'default' | 'danger' | undefined;
+	pending?: boolean | undefined;
 };
 
 /**

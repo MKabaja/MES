@@ -4,7 +4,7 @@ import { cn } from '@/shared/lib/utils';
 import { checkboxStyles } from './checkbox.styles';
 
 export type CheckboxProps = Omit<CheckboxPrimitive.Root.Props, 'className'> & {
-	className?: string;
+	className?: string | undefined;
 };
 
 /**

@@ -11,7 +11,7 @@ export type TableSkeletonProps = Omit<
 	'label' | 'children' | 'aria-busy'
 > & {
 	columnCount: number;
-	rowCount?: number;
+	rowCount?: number | undefined;
 };
 
 /**

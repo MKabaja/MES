@@ -5,7 +5,7 @@ import { tooltipStyles } from './tooltip.styles';
 export type TooltipProps = {
 	label: string;
 	children: ReactElement;
-	side?: TooltipPrimitive.Positioner.Props['side'];
+	side?: TooltipPrimitive.Positioner.Props['side'] | undefined;
 };
 
 /**

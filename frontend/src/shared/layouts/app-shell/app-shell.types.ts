@@ -5,7 +5,7 @@ export type AppShellNavItem = {
 	to: NonNullable<LinkProps['to']>;
 	label: string;
 	icon: LucideIcon;
-	counter?: number;
+	counter?: number | undefined;
 };
 
 export type AppShellUser = {

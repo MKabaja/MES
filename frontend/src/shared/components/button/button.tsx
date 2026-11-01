@@ -4,7 +4,7 @@ import { cn } from '@/shared/lib/utils';
 import { buttonVariants } from './button.styles';
 
 export type ButtonProps = Omit<ButtonPrimitive.Props, 'className'> &
-	VariantProps<typeof buttonVariants> & { className?: string };
+	VariantProps<typeof buttonVariants> & { className?: string | undefined };
 
 /**
  * Renders a design-system button; icon-only buttons must get an `aria-label`.

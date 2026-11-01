@@ -6,7 +6,7 @@ import { emptyStateStyles } from './empty-state.styles';
 
 export type EmptyStateProps = Omit<WellProps, 'children'> & {
 	message: string;
-	action?: ReactNode;
+	action?: ReactNode | undefined;
 };
 
 /**
