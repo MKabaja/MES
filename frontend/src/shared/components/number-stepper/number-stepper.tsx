@@ -37,19 +37,20 @@ export type NumberStepperProps = Omit<
 /**
  * Renders a number input with decrease and increase buttons that stop at `min` and `max`.
  * The `terminal` size gives 56 px touch targets; pass `aria-label` when no `Field` labels it.
+ * Parses decimals using the current i18n language; under React Hook Form use `Controller` and pass `inputRef={field.ref}`.
  */
 export function NumberStepper({
 	size = 'default',
 	'aria-label': ariaLabel,
-	inputMode = 'numeric',
+	inputMode = 'decimal',
 	className,
 	...rootProps
 }: NumberStepperProps) {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const buttonSize = buttonSizeByStepperSize[size];
 
 	return (
-		<NumberFieldPrimitive.Root {...rootProps}>
+		<NumberFieldPrimitive.Root locale={i18n.language} {...rootProps}>
 			<NumberFieldPrimitive.Group
 				className={cn(numberStepperVariants({ size }), className)}
 			>
