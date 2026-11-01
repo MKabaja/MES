@@ -11,7 +11,7 @@ export type ConfirmDialogProps = {
 	description: string;
 	confirmLabel: string;
 	onConfirm: () => void;
-	variant?: 'default' | 'danger' | undefined;
+	variant?: 'primary' | 'danger' | undefined;
 	pending?: boolean | undefined;
 };
 
@@ -26,7 +26,7 @@ export function ConfirmDialog({
 	description,
 	confirmLabel,
 	onConfirm,
-	variant = 'default',
+	variant = 'primary',
 	pending = false,
 }: ConfirmDialogProps) {
 	const { t } = useTranslation();
@@ -60,7 +60,7 @@ export function ConfirmDialog({
 							{t('dialog.cancel')}
 						</AlertDialogPrimitive.Close>
 						<Button
-							variant={variant === 'danger' ? 'danger' : 'primary'}
+							variant={variant}
 							disabled={pending}
 							focusableWhenDisabled
 							aria-busy={pending}
