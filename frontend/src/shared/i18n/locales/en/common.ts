@@ -7,6 +7,8 @@ export const common: typeof polishCommon = {
 		backToStart: 'Back to start',
 		errorTitle: 'Something went wrong',
 		retry: 'Try again',
+		forbiddenTitle: 'Access denied',
+		forbiddenDescription: 'You do not have permission to view this page.',
 	},
 	numberStepper: {
 		decrease: 'Decrease',
@@ -40,6 +42,14 @@ export const common: typeof polishCommon = {
 	},
 	session: {
 		logout: 'Log out',
+		role: {
+			admin: 'Manager',
+			worker: 'Hall worker',
+		},
+	},
+	nav: {
+		panel: 'Dashboard',
+		hall: 'Hall',
 	},
 	appShell: {
 		mainMenu: 'Main menu',
@@ -47,7 +57,32 @@ export const common: typeof polishCommon = {
 		expandMenu: 'Expand menu',
 		openMenu: 'Open menu',
 	},
-	home: {
-		title: 'OK',
+	auth: {
+		login: {
+			title: 'Sign in',
+			subtitle: 'Enter your login and password to continue.',
+			loginLabel: 'Login',
+			loginRequired: 'Enter your login.',
+			passwordLabel: 'Password',
+			passwordRequired: 'Enter your password.',
+			showPassword: 'Show password',
+			submit: 'Sign in',
+			support: 'Trouble signing in? Contact your administrator.',
+			tooManyAttemptsMinute: 'Too many attempts, try again in a minute.',
+			tooManyAttemptsMinutes:
+				'Too many attempts, try again in {{minutes}} min.',
+		},
+		stationMode: {
+			label: 'This device is a shop-floor station',
+		},
+		idleLogout: {
+			title: 'Inactivity',
+			description: 'You will be signed out in {{seconds}} s.',
+			stay: 'Keep me signed in',
+		},
+		signingOut: {
+			title: 'Signing out…',
+			offline: 'No connection. Retrying.',
+		},
 	},
 };

@@ -3,14 +3,15 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/button/button';
 import { Logo } from '@/shared/components/logo/logo';
+import { config } from '@/shared/config/app.config';
 import { formatTime } from '@/shared/lib/time';
-import { CLOCK_REFRESH_INTERVAL_MILLISECONDS } from './terminal-shell.constants';
 import { terminalShellStyles } from './terminal-shell.styles';
 import { useCurrentTime } from './use-current-time';
 
 export type TerminalShellProps = {
 	operatorName: string;
 	onLogout: () => void;
+	isLoggingOut?: boolean | undefined;
 	children: ReactNode;
 };
 
@@ -21,10 +22,11 @@ export type TerminalShellProps = {
 export function TerminalShell({
 	operatorName,
 	onLogout,
+	isLoggingOut = false,
 	children,
 }: TerminalShellProps) {
 	const { t } = useTranslation();
-	const nowIso = useCurrentTime(CLOCK_REFRESH_INTERVAL_MILLISECONDS);
+	const nowIso = useCurrentTime(config.layout.terminalClockRefreshMilliseconds);
 
 	return (
 		<div className={terminalShellStyles.root}>
@@ -43,6 +45,8 @@ export function TerminalShell({
 					variant="secondary"
 					size="terminal"
 					onClick={onLogout}
+					disabled={isLoggingOut}
+					focusableWhenDisabled
 					className={terminalShellStyles.logout}
 				>
 					<LogOut aria-hidden="true" />

@@ -3,10 +3,13 @@ import { RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
+import { registerSessionHandlers } from './features/auth/utils/session-handlers';
 import { queryClient } from './query-client';
 import { router } from './router';
 import { i18n } from './shared/i18n/i18n';
 import './styles/index.css';
+
+registerSessionHandlers({ queryClient, router });
 
 const rootElement = document.getElementById('root');
 

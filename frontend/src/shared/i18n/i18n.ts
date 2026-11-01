@@ -1,12 +1,13 @@
 import { createInstance } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import {
+	config,
 	setUiLanguageReader,
 	type UiLanguage,
 	uiLanguageSchema,
 } from '@/shared/config/app.config';
 import { readStorage, writeStorage } from '@/shared/lib/storage';
-import { DEFAULT_LANGUAGE, resourcesByLanguage } from './i18n.constants';
+import { resourcesByLanguage } from './i18n.constants';
 
 /**
  * Application i18n instance; starts in the language saved in storage (`pl` when missing or invalid).
@@ -15,7 +16,7 @@ export const i18n = createInstance();
 
 void i18n.use(initReactI18next).init({
 	lng: readStorage('mes.uiLanguage'),
-	fallbackLng: DEFAULT_LANGUAGE,
+	fallbackLng: config.i18n.defaultLanguage,
 	supportedLngs: uiLanguageSchema.options,
 	defaultNS: 'common',
 	ns: ['common', 'errors'],
@@ -26,7 +27,7 @@ void i18n.use(initReactI18next).init({
 
 function readCurrentLanguage(): UiLanguage {
 	const parsed = uiLanguageSchema.safeParse(i18n.resolvedLanguage);
-	return parsed.success ? parsed.data : DEFAULT_LANGUAGE;
+	return parsed.success ? parsed.data : config.i18n.defaultLanguage;
 }
 
 function applyLanguageToDocument(): void {

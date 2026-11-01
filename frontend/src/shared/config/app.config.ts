@@ -1,11 +1,5 @@
 import { z } from 'zod';
 
-export const API_BASE = '/api/v1';
-
-export const CSRF_COOKIE_PATH = '/sanctum/csrf-cookie';
-
-export const PLANT_TIMEZONE = 'Europe/Warsaw';
-
 export const uiLanguageSchema = z.enum(['pl', 'en']);
 
 export type UiLanguage = z.infer<typeof uiLanguageSchema>;
@@ -17,9 +11,7 @@ const formatLocaleByLanguage: FormatLocaleByLanguage = {
 	en: 'en-GB',
 };
 
-const DEFAULT_UI_LANGUAGE: UiLanguage = 'pl';
-
-let readUiLanguage: () => UiLanguage = () => DEFAULT_UI_LANGUAGE;
+let readUiLanguage: () => UiLanguage = () => config.i18n.defaultLanguage;
 
 /**
  * Returns the current UI language sent to the API as `Accept-Language`.
@@ -41,3 +33,37 @@ export function setUiLanguageReader(reader: () => UiLanguage): void {
 export function getFormatLocale(): string {
 	return formatLocaleByLanguage[getUiLanguage()];
 }
+
+/**
+ * Application settings grouped by topic; the single place for tunable values.
+ */
+export const config = {
+	api: {
+		baseUrl: '/api/v1',
+		csrfCookiePath: '/sanctum/csrf-cookie',
+		xsrfCookieName: 'XSRF-TOKEN',
+	},
+	plant: {
+		timezone: 'Europe/Warsaw',
+	},
+	i18n: {
+		defaultLanguage: 'pl' satisfies UiLanguage,
+	},
+	queries: {
+		staleTimeMilliseconds: 30_000,
+		sessionStaleTimeMilliseconds: Number.POSITIVE_INFINITY,
+		maxQueryRetries: 1,
+		mutationRetries: 0,
+	},
+	layout: {
+		desktopMediaQuery: '(min-width: 1024px)',
+		terminalClockRefreshMilliseconds: 15_000,
+	},
+	station: {
+		idleLogoutFallbackMinutes: 5,
+		idleWarningSeconds: 30,
+	},
+	session: {
+		logoutRetrySeconds: 30,
+	},
+} as const;

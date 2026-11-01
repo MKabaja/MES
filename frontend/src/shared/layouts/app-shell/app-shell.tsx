@@ -9,6 +9,7 @@ export type AppShellProps = {
 	user: AppShellUser;
 	navItems: AppShellNavItem[];
 	onLogout: () => void;
+	isLoggingOut?: boolean | undefined;
 	children: ReactNode;
 };
 
@@ -20,6 +21,7 @@ export function AppShell({
 	user,
 	navItems,
 	onLogout,
+	isLoggingOut = false,
 	children,
 }: AppShellProps) {
 	const { isCollapsed, toggle } = useSidebarCollapsed();
@@ -30,11 +32,17 @@ export function AppShell({
 				user={user}
 				navItems={navItems}
 				onLogout={onLogout}
+				isLoggingOut={isLoggingOut}
 				isCollapsed={isCollapsed}
 				onToggleCollapsed={toggle}
 			/>
 			<div className={appShellStyles.content}>
-				<MobileMenu user={user} navItems={navItems} onLogout={onLogout} />
+				<MobileMenu
+					user={user}
+					navItems={navItems}
+					onLogout={onLogout}
+					isLoggingOut={isLoggingOut}
+				/>
 				<main className={appShellStyles.main}>{children}</main>
 			</div>
 		</div>

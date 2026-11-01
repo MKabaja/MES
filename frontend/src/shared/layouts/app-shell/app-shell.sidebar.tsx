@@ -16,6 +16,7 @@ export type SidebarProps = {
 	user: AppShellUser;
 	navItems: AppShellNavItem[];
 	onLogout: () => void;
+	isLoggingOut: boolean;
 	isCollapsed: boolean;
 	onToggleCollapsed: () => void;
 };
@@ -24,6 +25,7 @@ export function Sidebar({
 	user,
 	navItems,
 	onLogout,
+	isLoggingOut,
 	isCollapsed,
 	onToggleCollapsed,
 }: SidebarProps) {
@@ -50,7 +52,12 @@ export function Sidebar({
 				</Tooltip>
 			</div>
 			<Nav items={navItems} isCollapsed={isCollapsed} />
-			<UserPanel user={user} onLogout={onLogout} isCollapsed={isCollapsed} />
+			<UserPanel
+				user={user}
+				onLogout={onLogout}
+				isLoggingOut={isLoggingOut}
+				isCollapsed={isCollapsed}
+			/>
 		</aside>
 	);
 }

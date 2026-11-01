@@ -10,33 +10,88 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/_auth'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthAdminRouteImport } from './routes/_auth/_admin'
+import { Route as AuthHallRouteImport } from './routes/_auth/_hall'
+import { Route as AuthAdminPanelRouteImport } from './routes/_auth/_admin/panel'
+import { Route as AuthHallHalaIndexRouteImport } from './routes/_auth/_hall/hala/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthAdminRoute = AuthAdminRouteImport.update({
+  id: '/_admin',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthHallRoute = AuthHallRouteImport.update({
+  id: '/_hall',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthAdminPanelRoute = AuthAdminPanelRouteImport.update({
+  id: '/panel',
+  path: '/panel',
+  getParentRoute: () => AuthAdminRoute,
+} as any)
+const AuthHallHalaIndexRoute = AuthHallHalaIndexRouteImport.update({
+  id: '/hala/',
+  path: '/hala/',
+  getParentRoute: () => AuthHallRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/panel': typeof AuthAdminPanelRoute
+  '/hala/': typeof AuthHallHalaIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/panel': typeof AuthAdminPanelRoute
+  '/hala': typeof AuthHallHalaIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_auth': typeof AuthRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_auth/_admin': typeof AuthAdminRouteWithChildren
+  '/_auth/_hall': typeof AuthHallRouteWithChildren
+  '/_auth/_admin/panel': typeof AuthAdminPanelRoute
+  '/_auth/_hall/hala/': typeof AuthHallHalaIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/login' | '/panel' | '/hala/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/login' | '/panel' | '/hala'
+  id:
+    | '__root__'
+    | '/'
+    | '/_auth'
+    | '/login'
+    | '/_auth/_admin'
+    | '/_auth/_hall'
+    | '/_auth/_admin/panel'
+    | '/_auth/_hall/hala/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +103,91 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/_admin': {
+      id: '/_auth/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthAdminRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/_hall': {
+      id: '/_auth/_hall'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthHallRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/_admin/panel': {
+      id: '/_auth/_admin/panel'
+      path: '/panel'
+      fullPath: '/panel'
+      preLoaderRoute: typeof AuthAdminPanelRouteImport
+      parentRoute: typeof AuthAdminRoute
+    }
+    '/_auth/_hall/hala/': {
+      id: '/_auth/_hall/hala/'
+      path: '/hala'
+      fullPath: '/hala/'
+      preLoaderRoute: typeof AuthHallHalaIndexRouteImport
+      parentRoute: typeof AuthHallRoute
+    }
   }
 }
 
+interface AuthAdminRouteChildren {
+  AuthAdminPanelRoute: typeof AuthAdminPanelRoute
+}
+
+const AuthAdminRouteChildren: AuthAdminRouteChildren = {
+  AuthAdminPanelRoute: AuthAdminPanelRoute,
+}
+
+const AuthAdminRouteWithChildren = AuthAdminRoute._addFileChildren(
+  AuthAdminRouteChildren,
+)
+
+interface AuthHallRouteChildren {
+  AuthHallHalaIndexRoute: typeof AuthHallHalaIndexRoute
+}
+
+const AuthHallRouteChildren: AuthHallRouteChildren = {
+  AuthHallHalaIndexRoute: AuthHallHalaIndexRoute,
+}
+
+const AuthHallRouteWithChildren = AuthHallRoute._addFileChildren(
+  AuthHallRouteChildren,
+)
+
+interface AuthRouteChildren {
+  AuthAdminRoute: typeof AuthAdminRouteWithChildren
+  AuthHallRoute: typeof AuthHallRouteWithChildren
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthAdminRoute: AuthAdminRouteWithChildren,
+  AuthHallRoute: AuthHallRouteWithChildren,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

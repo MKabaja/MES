@@ -1,9 +1,5 @@
 import type { ZodType } from 'zod';
-import {
-	API_BASE,
-	CSRF_COOKIE_PATH,
-	getUiLanguage,
-} from '@/shared/config/app.config';
+import { config, getUiLanguage } from '@/shared/config/app.config';
 import { assertNoPathTraversal } from './api-path';
 import {
 	hasLoadedCsrfCookie,
@@ -13,9 +9,11 @@ import {
 import {
 	HttpError,
 	INVALID_RESPONSE_CODE,
+	isSessionRejectedError,
 	NETWORK_ERROR_CODE,
 	parseApiError,
 } from './http-error';
+import { HTTP_STATUS } from './http-status.constants';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -28,10 +26,8 @@ export type HttpRequestOptions<TResponse> = {
 };
 
 type UnauthorizedHandler = () => void;
+type SessionRejectedHandler = (error: HttpError) => void;
 
-const STATUS_NO_CONTENT = 204;
-const STATUS_UNAUTHORIZED = 401;
-const STATUS_CSRF_MISMATCH = 419;
 const NETWORK_ERROR_MESSAGE = 'Brak połączenia z serwerem.';
 const INVALID_RESPONSE_MESSAGE =
 	'Coś poszło nie tak. Spróbuj ponownie za chwilę.';
@@ -50,6 +46,7 @@ const CLIENT_OWNED_HEADERS = [
 ] as const;
 
 let handleUnauthorized: UnauthorizedHandler = () => {};
+let handleSessionRejected: SessionRejectedHandler = () => {};
 let pendingCsrfRequest: Promise<void> | null = null;
 
 /**
@@ -57,6 +54,15 @@ let pendingCsrfRequest: Promise<void> | null = null;
  */
 export function setUnauthorizedHandler(handler: UnauthorizedHandler): void {
 	handleUnauthorized = handler;
+}
+
+/**
+ * Registers the callback run on every 403 that rejects the whole session (`ACCOUNT_INACTIVE`, `NETWORK_NOT_ALLOWED`), before the `HttpError` is thrown.
+ */
+export function setSessionRejectedHandler(
+	handler: SessionRejectedHandler,
+): void {
+	handleSessionRejected = handler;
 }
 
 /**
@@ -75,7 +81,7 @@ export async function http<TResponse>(
 ): Promise<TResponse> {
 	assertNoPathTraversal(path);
 	let response = await sendRequest(path, options);
-	if (response.status === STATUS_CSRF_MISMATCH) {
+	if (response.status === HTTP_STATUS.csrfMismatch) {
 		await ensureCsrfCookie(true);
 		response = await sendRequest(path, options);
 	}
@@ -99,7 +105,7 @@ export async function ensureCsrfCookie(force = false): Promise<void> {
 }
 
 async function requestCsrfCookie(): Promise<void> {
-	const response = await fetchOrThrowNetworkError(CSRF_COOKIE_PATH, {
+	const response = await fetchOrThrowNetworkError(config.api.csrfCookiePath, {
 		credentials: 'same-origin',
 		headers: { Accept: 'application/json' },
 	});
@@ -113,7 +119,7 @@ async function sendRequest<TResponse>(
 	path: string,
 	{ method = 'GET', body, signal, headers }: HttpRequestOptions<TResponse>,
 ): Promise<Response> {
-	return fetchOrThrowNetworkError(`${API_BASE}${path}`, {
+	return fetchOrThrowNetworkError(`${config.api.baseUrl}${path}`, {
 		method,
 		body: serializeBody(body),
 		signal: signal ?? null,
@@ -169,10 +175,18 @@ async function fetchOrThrowNetworkError(
 }
 
 async function buildHttpError(response: Response): Promise<HttpError> {
-	if (response.status === STATUS_UNAUTHORIZED) {
+	if (response.status === HTTP_STATUS.unauthorized) {
 		handleUnauthorized();
 	}
-	return parseApiError(response.status, await readJsonOrNull(response));
+	const error = parseApiError(
+		response.status,
+		await readJsonOrNull(response),
+		response.headers.get('Retry-After'),
+	);
+	if (isSessionRejectedError(error)) {
+		handleSessionRejected(error);
+	}
+	return error;
 }
 
 async function readJsonOrNull(response: Response): Promise<unknown> {
@@ -189,7 +203,7 @@ async function parseSuccessBody<TResponse>(
 	schema: ZodType<TResponse>,
 ): Promise<TResponse> {
 	const payload =
-		response.status === STATUS_NO_CONTENT
+		response.status === HTTP_STATUS.noContent
 			? undefined
 			: await readJsonOrNull(response);
 	const parsed = schema.safeParse(payload);

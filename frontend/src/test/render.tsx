@@ -8,6 +8,7 @@ import { type RenderResult, render } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { I18nextProvider } from 'react-i18next';
+import { registerSessionHandlers } from '@/features/auth/utils/session-handlers';
 import { createAppRouter } from '@/router';
 import { i18n } from '@/shared/i18n/i18n';
 
@@ -39,6 +40,7 @@ export async function renderWithProviders(
 		queryClient,
 		history: createMemoryHistory({ initialEntries: [route] }),
 	});
+	registerSessionHandlers({ queryClient, router });
 	await router.load();
 	const result = render(
 		<I18nextProvider i18n={i18n}>

@@ -1,0 +1,31 @@
+import { z } from 'zod';
+import { idSchema, isoDateTimeSchema } from '@/shared/api/primitives.schemas';
+
+export const roleSchema = z.enum(['admin', 'worker']);
+
+export const userSchema = z.object({
+	id: idSchema,
+	first_name: z.string(),
+	last_name: z.string(),
+	full_name: z.string(),
+	login: z.string(),
+	role: roleSchema,
+	is_active: z.boolean(),
+	created_at: isoDateTimeSchema,
+});
+
+export const userResponseSchema = z.object({ data: userSchema });
+
+export const loginFormSchema = z.object({
+	login: z.string().trim().min(1),
+	password: z.string().min(1),
+});
+
+export const loginSearchSchema = z.object({
+	redirect: z.string().optional().catch(undefined),
+});
+
+export const sessionBroadcastMessageSchema = z.discriminatedUnion('type', [
+	z.object({ type: z.literal('ended') }),
+	z.object({ type: z.literal('signedIn'), userId: idSchema }),
+]);

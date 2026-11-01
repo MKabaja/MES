@@ -5,6 +5,8 @@ export const common = {
 		backToStart: 'Wróć do początku',
 		errorTitle: 'Coś poszło nie tak',
 		retry: 'Spróbuj ponownie',
+		forbiddenTitle: 'Brak dostępu',
+		forbiddenDescription: 'Nie masz uprawnień do tej strony.',
 	},
 	numberStepper: {
 		decrease: 'Zmniejsz',
@@ -38,6 +40,14 @@ export const common = {
 	},
 	session: {
 		logout: 'Wyloguj',
+		role: {
+			admin: 'Kierownik',
+			worker: 'Pracownik hali',
+		},
+	},
+	nav: {
+		panel: 'Panel',
+		hall: 'Hala',
 	},
 	appShell: {
 		mainMenu: 'Menu główne',
@@ -45,7 +55,31 @@ export const common = {
 		expandMenu: 'Rozwiń menu',
 		openMenu: 'Otwórz menu',
 	},
-	home: {
-		title: 'OK',
+	auth: {
+		login: {
+			title: 'Zaloguj się',
+			subtitle: 'Wpisz login i hasło, aby przejść do systemu.',
+			loginLabel: 'Login',
+			loginRequired: 'Podaj login.',
+			passwordLabel: 'Hasło',
+			passwordRequired: 'Podaj hasło.',
+			showPassword: 'Pokaż hasło',
+			submit: 'Zaloguj się',
+			support: 'Problem z logowaniem? Skontaktuj się z administratorem.',
+			tooManyAttemptsMinute: 'Za dużo prób, spróbuj za minutę.',
+			tooManyAttemptsMinutes: 'Za dużo prób, spróbuj za {{minutes}} min.',
+		},
+		stationMode: {
+			label: 'To urządzenie to stanowisko na hali',
+		},
+		idleLogout: {
+			title: 'Bezczynność',
+			description: 'Za {{seconds}} s nastąpi wylogowanie.',
+			stay: 'Zostaję zalogowany',
+		},
+		signingOut: {
+			title: 'Wylogowywanie…',
+			offline: 'Brak połączenia. Ponawiamy próbę.',
+		},
 	},
 };
