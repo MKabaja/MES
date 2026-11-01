@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { authQueries } from '@/features/auth/api/auth.queries';
 import type { Role } from '@/features/auth/model/auth.types';
 import { http } from '@/shared/api/http';
+import { readSessionStorage, writeSessionStorage } from '@/shared/lib/storage';
 import { buildUser } from '@/test/fixtures/user';
 import { server } from '@/test/msw/server';
 import {
@@ -694,6 +695,98 @@ describe('logout waiting for the server', () => {
 		expect(await screen.findByRole('alert')).toHaveTextContent(
 			'Dostęp z tej sieci jest niedozwolony.',
 		);
+	});
+});
+
+describe('logout pending across a reload', () => {
+	function recordSessionRequests() {
+		const sessionRequests: string[] = [];
+		const logoutResponse = createGate();
+		server.use(
+			mswHttp.get('*/api/v1/auth/me', () => {
+				sessionRequests.push('me');
+				return HttpResponse.json({ data: buildUser() });
+			}),
+			mswHttp.post('*/api/v1/auth/logout', async () => {
+				sessionRequests.push('logout');
+				await logoutResponse.promise;
+				return new HttpResponse(null, { status: 204 });
+			}),
+		);
+		return { sessionRequests, logoutResponse };
+	}
+
+	it('remembers the pending logout for this tab and forgets it once the server confirms', async () => {
+		signInAs('worker');
+		const { logoutResponse } = recordSessionRequests();
+		const { user } = await renderWithProviders(undefined, { route: '/hala' });
+		await screen.findByRole('heading', { name: 'Hala' });
+		server.use(
+			mswHttp.post('*/api/v1/auth/logout', () => HttpResponse.error(), {
+				once: true,
+			}),
+		);
+		await user.click(screen.getByRole('button', { name: 'Wyloguj' }));
+		await screen.findByText('Wylogowywanie…');
+		expect(readSessionStorage('mes.pendingLogout')).toBe(true);
+
+		act(() => {
+			window.dispatchEvent(new Event('online'));
+		});
+		logoutResponse.open();
+
+		expect(
+			await screen.findByRole('heading', { name: 'Zaloguj się' }),
+		).toBeInTheDocument();
+		expect(readSessionStorage('mes.pendingLogout')).toBe(false);
+	});
+
+	it('finishes the logout after a reload before checking the session', async () => {
+		writeSessionStorage('mes.pendingLogout', true);
+		const { sessionRequests, logoutResponse } = recordSessionRequests();
+
+		const { router } = await renderWithProviders(undefined, {
+			route: '/hala',
+		});
+
+		expect(screen.getByText('Wylogowywanie…')).toBeInTheDocument();
+		await waitFor(() => expect(sessionRequests).toEqual(['logout']));
+
+		logoutResponse.open();
+
+		expect(
+			await screen.findByRole('heading', { name: 'Zaloguj się' }),
+		).toBeInTheDocument();
+		expect(router.state.location.pathname).toBe('/login');
+		expect(sessionRequests).toEqual(['logout']);
+		expect(readSessionStorage('mes.pendingLogout')).toBe(false);
+	});
+
+	it('keeps retrying the resumed logout until the network comes back', async () => {
+		writeSessionStorage('mes.pendingLogout', true);
+		let logoutAttempts = 0;
+		server.use(
+			mswHttp.post('*/api/v1/auth/logout', () => {
+				logoutAttempts += 1;
+				return logoutAttempts === 1
+					? HttpResponse.error()
+					: new HttpResponse(null, { status: 204 });
+			}),
+		);
+		await renderWithProviders(undefined, { route: '/hala' });
+		expect(
+			await screen.findByText('Brak połączenia. Ponawiamy próbę.'),
+		).toBeInTheDocument();
+		expect(readSessionStorage('mes.pendingLogout')).toBe(true);
+
+		act(() => {
+			window.dispatchEvent(new Event('online'));
+		});
+
+		expect(
+			await screen.findByRole('heading', { name: 'Zaloguj się' }),
+		).toBeInTheDocument();
+		expect(logoutAttempts).toBe(2);
 	});
 });
 

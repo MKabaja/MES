@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { readStorage, writeStorage } from './storage';
+import {
+	readSessionStorage,
+	readStorage,
+	removeSessionStorage,
+	writeSessionStorage,
+	writeStorage,
+} from './storage';
 
 type FakeStorage = Pick<Storage, 'getItem' | 'setItem'>;
 
@@ -105,5 +111,26 @@ describe('writeStorage', () => {
 		stubThrowingStorage();
 
 		expect(() => writeStorage('mes.stationMode', true)).not.toThrow();
+	});
+});
+
+describe('session storage', () => {
+	it('keeps a tab value until it is removed', () => {
+		writeSessionStorage('mes.pendingLogout', true);
+		expect(readSessionStorage('mes.pendingLogout')).toBe(true);
+
+		removeSessionStorage('mes.pendingLogout');
+
+		expect(readSessionStorage('mes.pendingLogout')).toBe(false);
+	});
+
+	it('falls back without throwing when session storage is inaccessible', () => {
+		vi.spyOn(window, 'sessionStorage', 'get').mockImplementation(() => {
+			throw new DOMException('denied', 'SecurityError');
+		});
+
+		expect(() => writeSessionStorage('mes.pendingLogout', true)).not.toThrow();
+		expect(() => removeSessionStorage('mes.pendingLogout')).not.toThrow();
+		expect(readSessionStorage('mes.pendingLogout')).toBe(false);
 	});
 });

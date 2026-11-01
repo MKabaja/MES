@@ -3,6 +3,11 @@ import type { AnyRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import type { HttpError } from '@/shared/api/http-error';
 import { config } from '@/shared/config/app.config';
+import {
+	readSessionStorage,
+	removeSessionStorage,
+	writeSessionStorage,
+} from '@/shared/lib/storage';
 import { MILLISECONDS_PER_SECOND } from '@/shared/lib/time.constants';
 import { authQueries } from '../api/auth.queries';
 import {
@@ -48,7 +53,7 @@ let currentSessionEnding: SessionEnding | null = null;
  * Creates the single owner of every way a session ends (each clears the query cache, the router cache and toasts) and disposes the previous one; call once at startup.
  *
  * - `signOut`: one logout attempt; rejects with `HttpError` on a failure other than a lost connection.
- * - `forceSignOut` and a lost connection: hide the data at once and retry the logout every `config.session.logoutRetrySeconds` and on `online` until the server confirms.
+ * - `forceSignOut` and a lost connection: hide the data at once and retry the logout every `config.session.logoutRetrySeconds` and on `online` until the server confirms, also after a reload of the tab.
  * - `expireSession` (`401`, with `redirect=<current path>`) and `dropSession` (ended in another tab): move to `/login` without a logout request; late calls are ignored until `me` holds a user again.
  */
 export function startSessionEnding(
@@ -98,6 +103,11 @@ function createSessionEnding({
 			setState(ACTIVE_STATE);
 		}
 	});
+
+	if (readSessionStorage('mes.pendingLogout')) {
+		showCurtain(false);
+		void attemptLogout();
+	}
 
 	async function signOut(): Promise<void> {
 		if (state.status !== 'active') {
@@ -193,6 +203,7 @@ function createSessionEnding({
 
 	function showCurtain(isOffline: boolean): void {
 		if (state.status !== 'awaitingServerLogout') {
+			writeSessionStorage('mes.pendingLogout', true);
 			clearSessionData();
 			window.addEventListener('online', handleRetryDue);
 		}
@@ -201,6 +212,7 @@ function createSessionEnding({
 
 	async function leaveSession(): Promise<void> {
 		stopRetrying();
+		removeSessionStorage('mes.pendingLogout');
 		if (state.status !== 'awaitingServerLogout') {
 			setState(LEAVING_STATE);
 		}
