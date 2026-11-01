@@ -6,7 +6,8 @@ export const dialogStyles = {
 	header:
 		'flex h-[72px] shrink-0 items-center justify-between gap-4 border-b border-border px-6',
 	title: 'font-mono text-[17px] leading-6 font-medium text-text',
-	description: 'font-sans text-[15px] leading-[1.55] text-text-2',
+	description: 'px-6 pt-6 font-sans text-[15px] leading-[1.55] text-text-2',
+	form: 'flex min-h-0 flex-1 flex-col',
 	body: 'flex flex-col gap-4 overflow-y-auto p-6 font-sans text-[15px] leading-[1.55] text-text-2',
 	footer:
 		'flex shrink-0 items-center justify-end gap-2 border-t border-border px-6 py-4',

@@ -5,13 +5,26 @@ import { Button } from '@/shared/components/button/button';
 import { cn } from '@/shared/lib/utils';
 import { dialogStyles } from './dialog.styles';
 
-export type DialogContentProps = Omit<DialogPrimitive.Popup.Props, 'title'> & {
+export type DialogContentProps = Omit<
+	DialogPrimitive.Popup.Props,
+	'title' | 'className'
+> & {
 	title: string;
+	className?: string | undefined;
 };
 
 /**
  * Renders the modal window with an overlay, a header holding `title` and a close button.
  * Put {@link DialogDescription}, {@link DialogBody} and {@link DialogFooter} inside; extra props go to the window element.
+ * For a form, wrap body and footer in {@link DialogForm} so only the body scrolls.
+ *
+ * @example
+ * <DialogContent title="Nowy materiał">
+ *   <DialogForm onSubmit={handleSubmit}>
+ *     <DialogBody>...</DialogBody>
+ *     <DialogFooter>...</DialogFooter>
+ *   </DialogForm>
+ * </DialogContent>
  */
 export function DialogContent({
 	title,
