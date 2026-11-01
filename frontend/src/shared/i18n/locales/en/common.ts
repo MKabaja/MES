@@ -75,5 +75,10 @@ export const common: typeof polishCommon = {
 		stationMode: {
 			label: 'This device is a shop-floor station',
 		},
+		idleLogout: {
+			title: 'Inactivity',
+			description: 'You will be signed out in {{seconds}} s.',
+			stay: 'Keep me signed in',
+		},
 	},
 };

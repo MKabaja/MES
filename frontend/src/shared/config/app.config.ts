@@ -41,3 +41,11 @@ export function setUiLanguageReader(reader: () => UiLanguage): void {
 export function getFormatLocale(): string {
 	return formatLocaleByLanguage[getUiLanguage()];
 }
+
+export const config = {
+	station: {
+		idleLogoutFallbackMinutes: 5,
+		idleWarningSeconds: 30,
+		signOutRetrySeconds: 30,
+	},
+} as const;

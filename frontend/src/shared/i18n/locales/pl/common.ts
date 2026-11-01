@@ -72,5 +72,10 @@ export const common = {
 		stationMode: {
 			label: 'To urządzenie to stanowisko na hali',
 		},
+		idleLogout: {
+			title: 'Bezczynność',
+			description: 'Za {{seconds}} s nastąpi wylogowanie.',
+			stay: 'Zostaję zalogowany',
+		},
 	},
 };
