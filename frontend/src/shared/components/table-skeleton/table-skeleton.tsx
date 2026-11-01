@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Table, type TableProps } from '@/shared/components/table/table';
 import { TableBody } from '@/shared/components/table/table.body';
-import { TableCaption } from '@/shared/components/table/table.caption';
 import { TableCell } from '@/shared/components/table/table.cell';
 import { TableRow } from '@/shared/components/table/table.row';
 import { tableSkeletonStyles } from './table-skeleton.styles';
@@ -16,7 +15,7 @@ export type TableSkeletonProps = Omit<
 
 /**
  * Renders placeholder rows shaped like the target table for the first load.
- * Marked `aria-busy` with a visually hidden caption so screen readers announce loading.
+ * The scroll region carries the `table.loading` name and the table is marked `aria-busy`, so loading is announced once.
  */
 export function TableSkeleton({
 	columnCount,
@@ -32,7 +31,6 @@ export function TableSkeleton({
 
 	return (
 		<Table label={t('table.loading')} aria-busy="true" {...tableProps}>
-			<TableCaption>{t('table.loading')}</TableCaption>
 			<TableBody>
 				{rowIndexes.map((rowIndex) => (
 					<TableRow key={rowIndex}>
