@@ -1,14 +1,15 @@
 import { RadioGroup as RadioGroupPrimitive } from '@base-ui/react/radio-group';
+import type { VariantProps } from 'class-variance-authority';
 import { cn } from '@/shared/lib/utils';
-import { segmentedControlStyles } from './segmented-control.styles';
+import { segmentedControlVariants } from './segmented-control.styles';
 
 export type SegmentedControlProps<Value extends string> = Omit<
 	RadioGroupPrimitive.Props<Value>,
 	'className'
-> & {
-	size?: 'default' | 'terminal' | undefined;
-	className?: string | undefined;
-};
+> &
+	VariantProps<typeof segmentedControlVariants> & {
+		className?: string | undefined;
+	};
 
 /**
  * Renders a `radiogroup` of 2-4 mutually exclusive options navigable with arrow keys; give it an `aria-label`.
@@ -21,7 +22,7 @@ export function SegmentedControl<Value extends string>({
 	return (
 		<RadioGroupPrimitive
 			data-size={size}
-			className={cn(segmentedControlStyles.root, className)}
+			className={cn(segmentedControlVariants({ size }), className)}
 			{...props}
 		/>
 	);
