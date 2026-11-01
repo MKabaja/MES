@@ -34,6 +34,19 @@ export const common: typeof polishCommon = {
 		paused: 'Paused',
 		completed: 'Completed',
 	},
+	brand: {
+		name: 'MES',
+		tagline: 'Welding shop',
+	},
+	session: {
+		logout: 'Log out',
+	},
+	appShell: {
+		mainMenu: 'Main menu',
+		collapseMenu: 'Collapse menu',
+		expandMenu: 'Expand menu',
+		openMenu: 'Open menu',
+	},
 	home: {
 		title: 'OK',
 	},
