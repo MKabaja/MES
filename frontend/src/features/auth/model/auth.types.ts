@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { roleSchema, userSchema } from './auth.schemas';
+import type { loginFormSchema, roleSchema, userSchema } from './auth.schemas';
 
 export type Role = z.infer<typeof roleSchema>;
 
@@ -9,3 +9,5 @@ export type LoginCredentials = {
 	login: string;
 	password: string;
 };
+
+export type LoginFormValues = z.infer<typeof loginFormSchema>;

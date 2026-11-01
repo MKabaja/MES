@@ -45,6 +45,24 @@ export const common = {
 		expandMenu: 'Rozwiń menu',
 		openMenu: 'Otwórz menu',
 	},
+	auth: {
+		login: {
+			title: 'Zaloguj się',
+			subtitle: 'Wpisz login i hasło, aby przejść do systemu.',
+			loginLabel: 'Login',
+			loginRequired: 'Podaj login.',
+			passwordLabel: 'Hasło',
+			passwordRequired: 'Podaj hasło.',
+			showPassword: 'Pokaż hasło',
+			submit: 'Zaloguj się',
+			support: 'Problem z logowaniem? Skontaktuj się z administratorem.',
+			tooManyAttemptsMinute: 'Za dużo prób, spróbuj za minutę.',
+			tooManyAttemptsMinutes: 'Za dużo prób, spróbuj za {{minutes}} min.',
+		},
+		stationMode: {
+			label: 'To urządzenie to stanowisko na hali',
+		},
+	},
 	home: {
 		title: 'OK',
 	},

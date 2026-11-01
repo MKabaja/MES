@@ -15,3 +15,12 @@ export const userSchema = z.object({
 });
 
 export const userResponseSchema = z.object({ data: userSchema });
+
+export const loginFormSchema = z.object({
+	login: z.string().trim().min(1),
+	password: z.string().min(1),
+});
+
+export const loginSearchSchema = z.object({
+	redirect: z.string().optional().catch(undefined),
+});

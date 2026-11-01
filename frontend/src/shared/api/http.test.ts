@@ -330,6 +330,23 @@ describe('http', () => {
 			});
 		});
 
+		it('exposes the Retry-After header of a rate limited response in seconds', async () => {
+			server.use(
+				mswHttp.post('*/api/v1/items', () =>
+					HttpResponse.json(
+						{ message: 'Za dużo prób.', code: 'TOO_MANY_REQUESTS' },
+						{ status: 429, headers: { 'Retry-After': '600' } },
+					),
+				),
+			);
+
+			const error = await captureError(
+				http('/items', { method: 'POST', schema: itemSchema }),
+			);
+
+			expect(error).toMatchObject({ status: 429, retryAfterSeconds: 600 });
+		});
+
 		it('maps an HTML error page to SERVER_ERROR', async () => {
 			server.use(
 				mswHttp.get(

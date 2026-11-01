@@ -47,6 +47,25 @@ export const common: typeof polishCommon = {
 		expandMenu: 'Expand menu',
 		openMenu: 'Open menu',
 	},
+	auth: {
+		login: {
+			title: 'Sign in',
+			subtitle: 'Enter your login and password to continue.',
+			loginLabel: 'Login',
+			loginRequired: 'Enter your login.',
+			passwordLabel: 'Password',
+			passwordRequired: 'Enter your password.',
+			showPassword: 'Show password',
+			submit: 'Sign in',
+			support: 'Trouble signing in? Contact your administrator.',
+			tooManyAttemptsMinute: 'Too many attempts, try again in a minute.',
+			tooManyAttemptsMinutes:
+				'Too many attempts, try again in {{minutes}} min.',
+		},
+		stationMode: {
+			label: 'This device is a shop-floor station',
+		},
+	},
 	home: {
 		title: 'OK',
 	},

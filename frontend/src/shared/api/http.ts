@@ -172,7 +172,11 @@ async function buildHttpError(response: Response): Promise<HttpError> {
 	if (response.status === STATUS_UNAUTHORIZED) {
 		handleUnauthorized();
 	}
-	return parseApiError(response.status, await readJsonOrNull(response));
+	return parseApiError(
+		response.status,
+		await readJsonOrNull(response),
+		response.headers.get('Retry-After'),
+	);
 }
 
 async function readJsonOrNull(response: Response): Promise<unknown> {
