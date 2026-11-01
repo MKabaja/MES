@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { settingsQueries } from '@/features/settings/api/settings.queries';
 import { config } from '@/shared/config/app.config';
-import { useIdleLogout } from '../../hooks/use-idle-logout';
 import { IdleLogoutDialog } from '../idle-logout-dialog/idle-logout-dialog';
-import { useStationMode } from '../station-mode-toggle/use-station-mode';
+import { useStationMode } from '../use-station-mode';
+import { useIdleLogout } from './use-idle-logout';
 
 export type StationIdleLogoutProps = { onTimeout: () => void };
 
@@ -20,7 +20,6 @@ export function StationIdleLogout({ onTimeout }: StationIdleLogoutProps) {
 function IdleStation({ onTimeout }: StationIdleLogoutProps) {
 	const { data: settings } = useQuery(settingsQueries.public());
 	const { state, stayLoggedIn } = useIdleLogout({
-		enabled: true,
 		idleMinutes:
 			settings?.station_idle_logout_minutes ??
 			config.station.idleLogoutFallbackMinutes,

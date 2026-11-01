@@ -122,6 +122,7 @@
 											"@/features/*/utils/**",
 											"@/features/*/api/*.api",
 											"@/features/*/api/use-*",
+											"@/features/*/components/use-*",
 											"@/features/*/components/*/*.*",
 											"@/features/*/components/*/use-*",
 											"@/features/*/components/*/*/**"

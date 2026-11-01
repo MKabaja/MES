@@ -8,7 +8,7 @@ import { type RenderResult, render } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { registerSessionHandlers } from '@/features/auth/api/session-handlers';
+import { registerSessionHandlers } from '@/features/auth/utils/session-handlers';
 import { createAppRouter } from '@/router';
 import { i18n } from '@/shared/i18n/i18n';
 

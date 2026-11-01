@@ -10,11 +10,9 @@ beforeEach(() => {
 	vi.setSystemTime(new Date('2026-11-02T08:00:00Z'));
 });
 
-function setup({ enabled = true, idleMinutes = 5 } = {}) {
+function setup({ idleMinutes = 5 } = {}) {
 	const onTimeout = vi.fn();
-	const hook = renderHook(() =>
-		useIdleLogout({ enabled, idleMinutes, onTimeout }),
-	);
+	const hook = renderHook(() => useIdleLogout({ idleMinutes, onTimeout }));
 	return { onTimeout, ...hook };
 }
 
@@ -69,22 +67,6 @@ describe('useIdleLogout', () => {
 			document.dispatchEvent(new Event('visibilitychange'));
 		});
 
-		expect(onTimeout).not.toHaveBeenCalled();
-	});
-
-	it('drops the warning and never times out when disabled mid-warning', () => {
-		const onTimeout = vi.fn();
-		const { result, rerender } = renderHook(
-			({ enabled }) => useIdleLogout({ enabled, idleMinutes: 1, onTimeout }),
-			{ initialProps: { enabled: true } },
-		);
-		advance(40 * SECOND);
-		expect(result.current.state.status).toBe('warning');
-
-		rerender({ enabled: false });
-		advance(10 * MINUTE);
-
-		expect(result.current.state).toEqual({ status: 'active' });
 		expect(onTimeout).not.toHaveBeenCalled();
 	});
 
@@ -150,15 +132,6 @@ describe('useIdleLogout', () => {
 		expect(onTimeout).toHaveBeenCalledTimes(1);
 	});
 
-	it('does nothing while disabled', () => {
-		const { onTimeout, result } = setup({ enabled: false, idleMinutes: 1 });
-
-		advance(10 * MINUTE);
-
-		expect(onTimeout).not.toHaveBeenCalled();
-		expect(result.current.state).toEqual({ status: 'active' });
-	});
-
 	it('times out right away when the tab wakes up after the deadline passed', () => {
 		const { onTimeout } = setup({ idleMinutes: 5 });
 
@@ -173,8 +146,7 @@ describe('useIdleLogout', () => {
 	it('restarts the deadline when the idle time changes', () => {
 		const onTimeout = vi.fn();
 		const { rerender } = renderHook(
-			({ idleMinutes }) =>
-				useIdleLogout({ enabled: true, idleMinutes, onTimeout }),
+			({ idleMinutes }) => useIdleLogout({ idleMinutes, onTimeout }),
 			{ initialProps: { idleMinutes: 5 } },
 		);
 		advance(2 * MINUTE);

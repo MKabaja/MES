@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppShell } from '@/shared/layouts/app-shell/app-shell';
 import type { AppShellNavItem } from '@/shared/layouts/app-shell/app-shell.types';
-import { useSignOut } from '../../hooks/use-sign-out';
 import type { User } from '../../model/auth.types';
+import { useSignOut } from '../use-sign-out';
 
 export type OfficeLayoutProps = { user: User; children: ReactNode };
 

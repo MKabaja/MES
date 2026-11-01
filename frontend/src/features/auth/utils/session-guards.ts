@@ -3,8 +3,9 @@ import { redirect } from '@tanstack/react-router';
 import { isSessionRejectedError } from '@/shared/api/http-error';
 import { getErrorMessage } from '@/shared/i18n/error-message';
 import { authQueries } from '../api/auth.queries';
-import { isServerLogoutPending } from '../api/session-ending';
+import { LOGIN_PATH } from '../model/auth.constants';
 import type { User } from '../model/auth.types';
+import { isServerLogoutPending } from './session-ending';
 
 /**
  * Resolves the signed-in user from the `me` query, or `null` for a guest.
@@ -16,7 +17,7 @@ export async function loadSessionUser(
 	queryClient: QueryClient,
 ): Promise<User | null> {
 	if (isServerLogoutPending()) {
-		throw redirect({ to: '/login', replace: true });
+		throw redirect({ to: LOGIN_PATH, replace: true });
 	}
 	try {
 		const user = await queryClient.ensureQueryData(authQueries.me());
@@ -27,7 +28,7 @@ export async function loadSessionUser(
 	} catch (error) {
 		if (isSessionRejectedError(error)) {
 			throw redirect({
-				to: '/login',
+				to: LOGIN_PATH,
 				replace: true,
 				state: { sessionEndedMessage: getErrorMessage(error) },
 			});
@@ -55,7 +56,7 @@ export async function requireUser(
 	const user = await loadSessionUser(queryClient);
 	if (!user) {
 		throw redirect({
-			to: '/login',
+			to: LOGIN_PATH,
 			search: { redirect: redirectPath },
 			replace: true,
 		});

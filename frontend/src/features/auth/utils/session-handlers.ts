@@ -5,15 +5,14 @@ import {
 	setUnauthorizedHandler,
 } from '@/shared/api/http';
 import { getErrorMessage } from '@/shared/i18n/error-message';
-import { authQueries } from './auth.queries';
+import { authQueries } from '../api/auth.queries';
+import { LOGIN_PATH } from '../model/auth.constants';
 import { startSessionEnding } from './session-ending';
 
 export type SessionHandlersDependencies = {
 	queryClient: QueryClient;
 	router: AnyRouter;
 };
-
-const LOGIN_PATH = '/login';
 
 /**
  * Registers the global reactions to an unusable session; call once at startup.

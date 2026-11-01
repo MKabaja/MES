@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { useSignOut } from '../../hooks/use-sign-out';
 import { StationIdleLogout } from '../station-idle-logout/station-idle-logout';
+import { useSignOut } from '../use-sign-out';
 
 export type SessionLayoutProps = { children: ReactNode };
 

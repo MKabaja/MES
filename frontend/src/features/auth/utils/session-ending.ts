@@ -4,12 +4,13 @@ import { toast } from 'sonner';
 import type { HttpError } from '@/shared/api/http-error';
 import { config } from '@/shared/config/app.config';
 import { MILLISECONDS_PER_SECOND } from '@/shared/lib/time.constants';
-import { authQueries } from './auth.queries';
+import { authQueries } from '../api/auth.queries';
 import {
 	isNetworkFailure,
 	refreshCsrfCookie,
 	requestServerLogout,
-} from './end-session';
+} from '../api/server-logout.api';
+import { LOGIN_PATH } from '../model/auth.constants';
 
 export type SessionEndingState =
 	| { status: 'active' }
@@ -32,7 +33,6 @@ export type SessionEnding = {
 	dispose: () => void;
 };
 
-const LOGIN_PATH = '/login';
 const LOGOUT_RETRY_MILLISECONDS =
 	config.session.logoutRetrySeconds * MILLISECONDS_PER_SECOND;
 const ACTIVE_STATE: SessionEndingState = { status: 'active' };
@@ -42,13 +42,11 @@ const LEAVING_STATE: SessionEndingState = { status: 'leaving' };
 let currentSessionEnding: SessionEnding | null = null;
 
 /**
- * Creates the single owner of every way a session ends and makes it current, disposing the previous one; call once at startup.
- * Every ending drops the query cache, the router cache and all toasts.
+ * Creates the single owner of every way a session ends (each clears the query cache, the router cache and toasts) and disposes the previous one; call once at startup.
  *
- * - `signOut`: one logout attempt with the page still visible; rejects with `HttpError` on a failure other than a lost connection.
- * - `forceSignOut` (idle station, rejected session) and a lost connection: hides the data at once, shows the `awaitingServerLogout` curtain and retries
- *   the logout every `config.session.logoutRetrySeconds` and on `online`, one request at a time, until the server answers `204` or `401`.
- * - `expireSession` (`401`): moves to `/login?redirect=<current path>`. Late calls are ignored until `me` holds a user again.
+ * - `signOut`: one logout attempt; rejects with `HttpError` on a failure other than a lost connection.
+ * - `forceSignOut` and a lost connection: hide the data at once and retry the logout every `config.session.logoutRetrySeconds` and on `online` until the server confirms.
+ * - `expireSession` (`401`): moves to `/login?redirect=<current path>`; later calls are ignored until `me` holds a user again.
  */
 export function startSessionEnding(
 	dependencies: SessionEndingDependencies,

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Checkbox } from '@/shared/components/checkbox/checkbox';
 import { Field } from '@/shared/components/field/field';
-import { useStationMode } from './use-station-mode';
+import { useStationMode } from '../use-station-mode';
 
 /**
  * Renders the checkbox that marks this device as a shared hall station (remembered across visits).

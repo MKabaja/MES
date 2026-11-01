@@ -1,7 +1,7 @@
 import { toast } from 'sonner';
 import { HttpError } from '@/shared/api/http-error';
 import { getErrorMessage } from '@/shared/i18n/error-message';
-import { getSessionEnding } from '../api/session-ending';
+import { getSessionEnding } from '../utils/session-ending';
 import { useSessionEndingState } from './use-session-ending-state';
 
 export type SignOutControls = {

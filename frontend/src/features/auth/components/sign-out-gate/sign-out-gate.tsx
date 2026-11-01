@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '@/shared/components/spinner/spinner';
-import { useSessionEndingState } from '../../hooks/use-session-ending-state';
+import { useSessionEndingState } from '../use-session-ending-state';
 import { signOutGateStyles } from './sign-out-gate.styles';
 
 export type SignOutGateProps = { children: ReactNode };

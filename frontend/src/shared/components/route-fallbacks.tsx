@@ -68,7 +68,9 @@ function RouteForbidden() {
 	);
 }
 
-function RouteFailure({ reset }: { reset: () => void }) {
+type RouteFailureProps = { reset: () => void };
+
+function RouteFailure({ reset }: RouteFailureProps) {
 	const { t } = useTranslation();
 	const router = useRouter();
 	const queryErrorResetBoundary = useQueryErrorResetBoundary();

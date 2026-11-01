@@ -18,6 +18,11 @@ export async function login(credentials: LoginCredentials): Promise<User> {
 	return response.data;
 }
 
+/**
+ * Ends the server session.
+ *
+ * @throws `HttpError` with status `401` when there is no session left.
+ */
 export async function logout(): Promise<void> {
 	await http('/auth/logout', { method: 'POST', schema: z.undefined() });
 }

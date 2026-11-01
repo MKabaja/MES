@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { TerminalShell } from '@/shared/layouts/terminal-shell/terminal-shell';
-import { useSignOut } from '../../hooks/use-sign-out';
 import type { User } from '../../model/auth.types';
+import { useSignOut } from '../use-sign-out';
 
 export type HallLayoutProps = { user: User; children: ReactNode };
 

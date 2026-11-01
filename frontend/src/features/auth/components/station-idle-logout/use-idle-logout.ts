@@ -14,7 +14,6 @@ export type IdleLogoutState =
 	| { status: 'warning'; secondsLeft: number };
 
 export type UseIdleLogoutOptions = {
-	enabled: boolean;
 	idleMinutes: number;
 	onTimeout: () => void;
 };
@@ -29,10 +28,9 @@ const ACTIVE_STATE: IdleLogoutState = { status: 'active' };
 /**
  * Tracks inactivity (`pointerdown`, `keydown`, `touchstart`) and calls `onTimeout` once after `idleMinutes` without it; `stayLoggedIn` starts a new idle period.
  * Switches to `warning` for the last 30 s; from then only `stayLoggedIn` extends the session, other activity is ignored.
- * The deadline is a timestamp, so a throttled background tab still times out as soon as it wakes up. Does nothing while `enabled` is false.
+ * The deadline is a timestamp, so a throttled background tab still times out as soon as it wakes up.
  */
 export function useIdleLogout({
-	enabled,
 	idleMinutes,
 	onTimeout,
 }: UseIdleLogoutOptions): IdleLogoutControls {
@@ -43,10 +41,6 @@ export function useIdleLogout({
 	const handleTimeout = useEffectEvent(onTimeout);
 
 	useEffect(() => {
-		if (!enabled) {
-			return;
-		}
-
 		function evaluateDeadline(): void {
 			if (hasTimedOutRef.current) {
 				return;
@@ -103,7 +97,7 @@ export function useIdleLogout({
 			}
 			document.removeEventListener('visibilitychange', evaluateDeadline);
 		};
-	}, [enabled, idleMilliseconds]);
+	}, [idleMilliseconds]);
 
 	function stayLoggedIn(): void {
 		deadlineMillisecondsRef.current = Date.now() + idleMilliseconds;
@@ -111,5 +105,5 @@ export function useIdleLogout({
 		setState(ACTIVE_STATE);
 	}
 
-	return { state: enabled ? state : ACTIVE_STATE, stayLoggedIn };
+	return { state, stayLoggedIn };
 }
