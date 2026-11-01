@@ -4,8 +4,8 @@ import { dialogStyles } from './dialog.styles';
 
 export type DialogDescriptionProps = Omit<
 	DialogPrimitive.Description.Props,
-	'render'
->;
+	'render' | 'className'
+> & { className?: string | undefined };
 
 /**
  * Renders a paragraph that screen readers announce as the description of the surrounding {@link DialogContent}.
