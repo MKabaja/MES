@@ -16,6 +16,13 @@ export const common = {
 		next: 'Następna strona',
 		page: 'Strona {{page}}',
 	},
+	dialog: {
+		close: 'Zamknij',
+		cancel: 'Anuluj',
+	},
+	toaster: {
+		label: 'Powiadomienia',
+	},
 	table: {
 		loading: 'Ładowanie danych…',
 	},
