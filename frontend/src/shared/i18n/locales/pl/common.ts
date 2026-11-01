@@ -6,6 +6,45 @@ export const common = {
 		errorTitle: 'Coś poszło nie tak',
 		retry: 'Spróbuj ponownie',
 	},
+	numberStepper: {
+		decrease: 'Zmniejsz',
+		increase: 'Zwiększ',
+	},
+	pagination: {
+		label: 'Stronicowanie',
+		previous: 'Poprzednia strona',
+		next: 'Następna strona',
+		page: 'Strona {{page}}',
+	},
+	dialog: {
+		close: 'Zamknij',
+		cancel: 'Anuluj',
+	},
+	toaster: {
+		label: 'Powiadomienia',
+	},
+	table: {
+		loading: 'Ładowanie danych…',
+	},
+	operationStatus: {
+		pending: 'Zaplanowana',
+		in_progress: 'W toku',
+		paused: 'Pauza',
+		completed: 'Zakończona',
+	},
+	brand: {
+		name: 'MES',
+		tagline: 'Spawalnia',
+	},
+	session: {
+		logout: 'Wyloguj',
+	},
+	appShell: {
+		mainMenu: 'Menu główne',
+		collapseMenu: 'Zwiń menu',
+		expandMenu: 'Rozwiń menu',
+		openMenu: 'Otwórz menu',
+	},
 	home: {
 		title: 'OK',
 	},
