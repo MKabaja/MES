@@ -8,17 +8,19 @@ export type InputProps = Omit<InputPrimitive.Props, 'className' | 'size'> &
 	VariantProps<typeof inputContainerVariants> & {
 		startIcon?: ReactNode | undefined;
 		endIcon?: ReactNode | undefined;
+		endAction?: ReactNode | undefined;
 		className?: string | undefined;
 	};
 
 /**
- * Renders a text input in a bordered container with optional decorative icons.
+ * Renders a text input in a bordered container with optional decorative icons and an interactive `endAction` (e.g. a show-password button).
  * Picks up label, description and error wiring from an enclosing `Field`; `className` styles the container.
  */
 export function Input({
 	size,
 	startIcon,
 	endIcon,
+	endAction,
 	className,
 	...props
 }: InputProps) {
@@ -35,6 +37,7 @@ export function Input({
 					{endIcon}
 				</span>
 			) : null}
+			{endAction}
 		</div>
 	);
 }
