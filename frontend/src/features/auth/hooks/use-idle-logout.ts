@@ -1,8 +1,10 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { config } from '@/shared/config/app.config';
+import {
+	MILLISECONDS_PER_MINUTE,
+	MILLISECONDS_PER_SECOND,
+} from '@/shared/lib/time.constants';
 
-const MILLISECONDS_PER_SECOND = 1000;
-const MILLISECONDS_PER_MINUTE = 60_000;
 const WARNING_MILLISECONDS =
 	config.station.idleWarningSeconds * MILLISECONDS_PER_SECOND;
 const RETRY_MILLISECONDS =

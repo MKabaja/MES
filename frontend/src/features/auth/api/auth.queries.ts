@@ -1,16 +1,18 @@
 import { queryOptions } from '@tanstack/react-query';
 import { HttpError } from '@/shared/api/http-error';
+import { HTTP_STATUS } from '@/shared/api/http-status.constants';
 import { config } from '@/shared/config/app.config';
 import type { User } from '../model/auth.types';
 import { fetchMe } from './auth.api';
-
-const STATUS_UNAUTHORIZED = 401;
 
 async function fetchMeOrNull(signal: AbortSignal): Promise<User | null> {
 	try {
 		return await fetchMe({ signal });
 	} catch (error) {
-		if (error instanceof HttpError && error.status === STATUS_UNAUTHORIZED) {
+		if (
+			error instanceof HttpError &&
+			error.status === HTTP_STATUS.unauthorized
+		) {
 			return null;
 		}
 		throw error;

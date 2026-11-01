@@ -1,14 +1,14 @@
 import { resetCsrfCookie } from '@/shared/api/csrf';
 import { ensureCsrfCookie } from '@/shared/api/http';
 import { HttpError, NETWORK_ERROR_CODE } from '@/shared/api/http-error';
+import { HTTP_STATUS } from '@/shared/api/http-status.constants';
 import { logout } from './auth.api';
-
-const STATUS_UNAUTHORIZED = 401;
 
 function isAlreadySignedOut(error: unknown): boolean {
 	return (
 		error instanceof HttpError &&
-		(error.status === STATUS_UNAUTHORIZED || error.code === NETWORK_ERROR_CODE)
+		(error.status === HTTP_STATUS.unauthorized ||
+			error.code === NETWORK_ERROR_CODE)
 	);
 }
 

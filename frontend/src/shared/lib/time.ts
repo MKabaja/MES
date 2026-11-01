@@ -2,12 +2,14 @@ import { tz, tzOffset } from '@date-fns/tz';
 import { format, isValid } from 'date-fns';
 import { config } from '@/shared/config/app.config';
 import { EMPTY_VALUE } from '@/shared/lib/format.constants';
+import {
+	MILLISECONDS_PER_DAY,
+	MILLISECONDS_PER_MINUTE,
+	MINUTES_PER_HOUR,
+	SECONDS_PER_HOUR,
+	SECONDS_PER_MINUTE,
+} from '@/shared/lib/time.constants';
 
-const SECONDS_PER_MINUTE = 60;
-const MINUTES_PER_HOUR = 60;
-const SECONDS_PER_HOUR = 3600;
-const MILLISECONDS_PER_MINUTE = 60_000;
-const MILLISECONDS_PER_DAY = 86_400_000;
 const LOCAL_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const LOCAL_TIME_PATTERN = /^(\d{2}):(\d{2})$/;
 

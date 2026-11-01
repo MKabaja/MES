@@ -13,6 +13,7 @@ import {
 	NETWORK_ERROR_CODE,
 	parseApiError,
 } from './http-error';
+import { HTTP_STATUS } from './http-status.constants';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -27,9 +28,6 @@ export type HttpRequestOptions<TResponse> = {
 type UnauthorizedHandler = () => void;
 type SessionRejectedHandler = (error: HttpError) => void;
 
-const STATUS_NO_CONTENT = 204;
-const STATUS_UNAUTHORIZED = 401;
-const STATUS_CSRF_MISMATCH = 419;
 const NETWORK_ERROR_MESSAGE = 'Brak połączenia z serwerem.';
 const INVALID_RESPONSE_MESSAGE =
 	'Coś poszło nie tak. Spróbuj ponownie za chwilę.';
@@ -83,7 +81,7 @@ export async function http<TResponse>(
 ): Promise<TResponse> {
 	assertNoPathTraversal(path);
 	let response = await sendRequest(path, options);
-	if (response.status === STATUS_CSRF_MISMATCH) {
+	if (response.status === HTTP_STATUS.csrfMismatch) {
 		await ensureCsrfCookie(true);
 		response = await sendRequest(path, options);
 	}
@@ -177,7 +175,7 @@ async function fetchOrThrowNetworkError(
 }
 
 async function buildHttpError(response: Response): Promise<HttpError> {
-	if (response.status === STATUS_UNAUTHORIZED) {
+	if (response.status === HTTP_STATUS.unauthorized) {
 		handleUnauthorized();
 	}
 	const error = parseApiError(
@@ -205,7 +203,7 @@ async function parseSuccessBody<TResponse>(
 	schema: ZodType<TResponse>,
 ): Promise<TResponse> {
 	const payload =
-		response.status === STATUS_NO_CONTENT
+		response.status === HTTP_STATUS.noContent
 			? undefined
 			: await readJsonOrNull(response);
 	const parsed = schema.safeParse(payload);

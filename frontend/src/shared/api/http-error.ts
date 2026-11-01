@@ -1,4 +1,5 @@
 import { apiErrorSchema } from './api-error.schemas';
+import { HTTP_STATUS } from './http-status.constants';
 
 export type FieldErrors = Record<string, string[]>;
 
@@ -19,7 +20,6 @@ const SESSION_REJECTION_CODES: ReadonlySet<string> = new Set([
 	'ACCOUNT_INACTIVE',
 	'NETWORK_NOT_ALLOWED',
 ]);
-const STATUS_FORBIDDEN = 403;
 
 const WHOLE_SECONDS_PATTERN = /^\d+$/;
 
@@ -91,7 +91,7 @@ export function parseApiError(
 export function isForbiddenError(error: unknown): error is HttpError {
 	return (
 		error instanceof HttpError &&
-		error.status === STATUS_FORBIDDEN &&
+		error.status === HTTP_STATUS.forbidden &&
 		error.code === FORBIDDEN_CODE
 	);
 }
@@ -102,7 +102,7 @@ export function isForbiddenError(error: unknown): error is HttpError {
 export function isSessionRejectedError(error: unknown): error is HttpError {
 	return (
 		error instanceof HttpError &&
-		error.status === STATUS_FORBIDDEN &&
+		error.status === HTTP_STATUS.forbidden &&
 		SESSION_REJECTION_CODES.has(error.code)
 	);
 }

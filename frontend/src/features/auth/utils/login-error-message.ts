@@ -1,9 +1,8 @@
 import type { TFunction } from 'i18next';
 import type { HttpError } from '@/shared/api/http-error';
+import { HTTP_STATUS } from '@/shared/api/http-status.constants';
 import { getErrorMessage } from '@/shared/i18n/error-message';
-
-const STATUS_TOO_MANY_REQUESTS = 429;
-const SECONDS_PER_MINUTE = 60;
+import { SECONDS_PER_MINUTE } from '@/shared/lib/time.constants';
 
 /**
  * Returns the single message shown under the login button for a failed sign-in.
@@ -11,7 +10,7 @@ const SECONDS_PER_MINUTE = 60;
  * A `429` reports the wait from `Retry-After` in whole minutes (rounded up); every other message comes from the server unchanged.
  */
 export function getLoginErrorMessage(error: HttpError, t: TFunction): string {
-	if (error.status !== STATUS_TOO_MANY_REQUESTS) {
+	if (error.status !== HTTP_STATUS.tooManyRequests) {
 		return getErrorMessage(error);
 	}
 	const minutes = getRetryAfterMinutes(error.retryAfterSeconds);
