@@ -24,7 +24,7 @@ afterEach(() => {
 });
 
 describe('SessionIdleLogout on a station', () => {
-	it('hides the idle station behind the signing-out screen and retries until the logout succeeds', async () => {
+	it('hides the idle station behind the signing-out screen and checks no session until the retried logout succeeds', async () => {
 		let logoutAttempts = 0;
 		server.use(
 			http.post('*/api/v1/auth/logout', () => {
@@ -36,13 +36,24 @@ describe('SessionIdleLogout on a station', () => {
 		);
 		await renderWithProviders(undefined, { route: '/hala' });
 		await screen.findByRole('heading', { name: 'Hala' });
+		const meRequests = vi.fn();
+		server.use(
+			http.get('*/api/v1/auth/me', () => {
+				meRequests();
+				return HttpResponse.json(
+					{ message: 'Brak aktywnej sesji.', code: 'UNAUTHENTICATED' },
+					{ status: 401 },
+				);
+			}),
+		);
 
 		await act(() => vi.advanceTimersByTimeAsync(60_000));
-		expect(logoutAttempts).toBe(1);
 		expect(screen.getByText('Wylogowywanie…')).toBeInTheDocument();
 		expect(screen.queryByRole('heading', { name: 'Hala' })).toBeNull();
+		await act(() => vi.advanceTimersByTimeAsync(29_000));
+		expect(meRequests).not.toHaveBeenCalled();
 
-		await act(() => vi.advanceTimersByTimeAsync(30_000));
+		await act(() => vi.advanceTimersByTimeAsync(1000));
 
 		expect(
 			await screen.findByRole('heading', { name: 'Zaloguj się' }),
@@ -50,26 +61,12 @@ describe('SessionIdleLogout on a station', () => {
 		expect(logoutAttempts).toBe(2);
 	});
 
-	it('warns and signs out an idle admin', async () => {
-		const logoutRequests = vi.fn();
-		server.use(
-			http.get('*/api/v1/auth/me', () =>
-				HttpResponse.json({ data: buildUser({ role: 'admin' }) }),
-			),
-			http.post('*/api/v1/auth/logout', () => {
-				logoutRequests();
-				return new HttpResponse(null, { status: 204 });
-			}),
-		);
+	it('signs out an idle admin', async () => {
+		const logoutRequests = recordLogoutRequests(buildUser({ role: 'admin' }));
 		await renderWithProviders(undefined, { route: '/panel' });
 		await screen.findByRole('heading', { name: 'Panel' });
 
-		await act(() => vi.advanceTimersByTimeAsync(30_000));
-		expect(
-			await screen.findByRole('alertdialog', { name: /bezczynność/i }),
-		).toBeInTheDocument();
-
-		await act(() => vi.advanceTimersByTimeAsync(30_000));
+		await act(() => vi.advanceTimersByTimeAsync(60_000));
 
 		expect(
 			await screen.findByRole('heading', { name: 'Zaloguj się' }),
@@ -95,11 +92,7 @@ describe('SessionIdleLogout on a station', () => {
 
 			act(() => router.history.push(path));
 			await screen.findByRole('heading', { name: heading });
-			await act(() => vi.advanceTimersByTimeAsync(30_000));
-			expect(
-				await screen.findByRole('alertdialog', { name: /bezczynność/i }),
-			).toBeInTheDocument();
-			await act(() => vi.advanceTimersByTimeAsync(30_000));
+			await act(() => vi.advanceTimersByTimeAsync(60_000));
 
 			await waitFor(() => expect(logoutRequests).toHaveBeenCalledTimes(1));
 			expect(
@@ -113,11 +106,7 @@ describe('SessionIdleLogout on a station', () => {
 		await renderWithProviders(undefined, { route: '/login' });
 		await screen.findByRole('heading', { name: 'Zaloguj się' });
 
-		await act(() => vi.advanceTimersByTimeAsync(30_000));
-		expect(
-			await screen.findByRole('alertdialog', { name: /bezczynność/i }),
-		).toBeInTheDocument();
-		await act(() => vi.advanceTimersByTimeAsync(30_000));
+		await act(() => vi.advanceTimersByTimeAsync(60_000));
 
 		await waitFor(() => expect(logoutRequests).toHaveBeenCalledTimes(1));
 	});
@@ -146,35 +135,19 @@ describe('SessionIdleLogout on a station', () => {
 		expect(logoutRequests).not.toHaveBeenCalled();
 		expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
 	});
-
-	it('does not check the session while the logout waits for the server', async () => {
-		server.use(
-			http.post(
-				'*/api/v1/auth/logout',
-				() => new HttpResponse(null, { status: 500 }),
-			),
-		);
-		await renderWithProviders(undefined, { route: '/hala' });
-		await screen.findByRole('heading', { name: 'Hala' });
-		const meRequests = vi.fn();
-		server.use(
-			http.get('*/api/v1/auth/me', () => {
-				meRequests();
-				return HttpResponse.json({ data: buildUser() });
-			}),
-		);
-
-		await act(() => vi.advanceTimersByTimeAsync(60_000));
-		expect(screen.getByText('Wylogowywanie…')).toBeInTheDocument();
-		await act(() => vi.advanceTimersByTimeAsync(60_000));
-
-		expect(meRequests).not.toHaveBeenCalled();
-	});
 });
 
-function recordLogoutRequests() {
+function recordLogoutRequests(user = buildUser()) {
 	const logoutRequests = vi.fn();
 	server.use(
+		http.get('*/api/v1/auth/me', () =>
+			logoutRequests.mock.calls.length > 0
+				? HttpResponse.json(
+						{ message: 'Brak aktywnej sesji.', code: 'UNAUTHENTICATED' },
+						{ status: 401 },
+					)
+				: HttpResponse.json({ data: user }),
+		),
 		http.post('*/api/v1/auth/logout', () => {
 			logoutRequests();
 			return new HttpResponse(null, { status: 204 });

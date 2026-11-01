@@ -1,17 +1,37 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import type { QueryClient } from '@tanstack/react-query';
+import { act, screen } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { buildUser } from '@/test/fixtures/user';
 import { server } from '@/test/msw/server';
 import { renderWithProviders } from '@/test/render';
+import { authQueries } from '../api/auth.queries';
 
 const SIGNED_IN_USER_ID = buildUser().id;
 
 function openOtherTab() {
-	const channel = new BroadcastChannel('mes-session');
-	const receivedMessages = vi.fn();
-	channel.addEventListener('message', (event) => receivedMessages(event.data));
-	return { channel, receivedMessages };
+	return new BroadcastChannel('mes-session');
+}
+
+function receiveNextMessage(channel: BroadcastChannel): Promise<unknown> {
+	return new Promise((resolve) => {
+		channel.addEventListener('message', (event) => resolve(event.data), {
+			once: true,
+		});
+	});
+}
+
+function receiveMessageOfType(
+	channel: BroadcastChannel,
+	type: string,
+): Promise<void> {
+	return new Promise((resolve) => {
+		channel.addEventListener('message', (event) => {
+			if (event.data?.type === type) {
+				resolve();
+			}
+		});
+	});
 }
 
 function recordLogoutRequests() {
@@ -35,10 +55,18 @@ async function renderHall() {
 	return rendered;
 }
 
-function returnToTab() {
+async function returnToTab(queryClient: QueryClient) {
 	act(() => {
 		document.dispatchEvent(new Event('visibilitychange'));
 	});
+	expect(queryClient.isFetching({ queryKey: authQueries.me().queryKey })).toBe(
+		1,
+	);
+	await act(() =>
+		queryClient
+			.fetchQuery({ ...authQueries.me(), staleTime: 0 })
+			.catch(() => null),
+	);
 }
 
 describe('session sync between tabs', () => {
@@ -53,7 +81,7 @@ describe('session sync between tabs', () => {
 		async ({ message }) => {
 			const logoutRequests = recordLogoutRequests();
 			const { queryClient } = await renderHall();
-			const { channel } = openOtherTab();
+			const channel = openOtherTab();
 
 			channel.postMessage(message);
 
@@ -66,25 +94,30 @@ describe('session sync between tabs', () => {
 	);
 
 	it('ignores a sign-in of the same user and malformed messages from another tab', async () => {
-		await renderHall();
-		const { channel } = openOtherTab();
+		const { queryClient } = await renderHall();
+		const channel = openOtherTab();
+		const lastMessage = receiveMessageOfType(openOtherTab(), 'probe');
 
 		channel.postMessage({ type: 'signedIn', userId: SIGNED_IN_USER_ID });
 		channel.postMessage({ type: 'signedOut' });
-		await act(() => Promise.resolve());
+		channel.postMessage({ type: 'probe' });
+		await act(async () => {
+			await lastMessage;
+		});
 
+		expect(queryClient.getQueryData(authQueries.me().queryKey)).toEqual(
+			buildUser(),
+		);
 		expect(screen.getByRole('heading', { name: 'Hala' })).toBeInTheDocument();
 	});
 
 	it('tells other tabs when the server confirmed the logout', async () => {
 		const { user } = await renderHall();
-		const { receivedMessages } = openOtherTab();
+		const nextMessage = receiveNextMessage(openOtherTab());
 
 		await user.click(screen.getByRole('button', { name: 'Wyloguj' }));
 
-		await waitFor(() =>
-			expect(receivedMessages).toHaveBeenCalledWith({ type: 'ended' }),
-		);
+		await expect(nextMessage).resolves.toEqual({ type: 'ended' });
 	});
 
 	it('tells other tabs who signed in', async () => {
@@ -95,18 +128,16 @@ describe('session sync between tabs', () => {
 			),
 		);
 		const { user } = await renderWithProviders(undefined, { route: '/login' });
-		const { receivedMessages } = openOtherTab();
+		const nextMessage = receiveNextMessage(openOtherTab());
 
 		await user.type(await screen.findByLabelText('Login'), 'Jkowal');
 		await user.type(screen.getByLabelText('Hasło'), '1234');
 		await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
 
-		await waitFor(() =>
-			expect(receivedMessages).toHaveBeenCalledWith({
-				type: 'signedIn',
-				userId: SIGNED_IN_USER_ID,
-			}),
-		);
+		await expect(nextMessage).resolves.toEqual({
+			type: 'signedIn',
+			userId: SIGNED_IN_USER_ID,
+		});
 	});
 
 	it.each([
@@ -127,10 +158,10 @@ describe('session sync between tabs', () => {
 		'leaves for the login screen on return to the tab when $reason',
 		async ({ response }) => {
 			const logoutRequests = recordLogoutRequests();
-			await renderHall();
+			const { queryClient } = await renderHall();
 			answerMeWith(response);
 
-			returnToTab();
+			await returnToTab(queryClient);
 
 			expect(
 				await screen.findByRole('heading', { name: 'Zaloguj się' }),
@@ -140,25 +171,25 @@ describe('session sync between tabs', () => {
 	);
 
 	it('stays on the page on return to the tab when the same user is signed in', async () => {
-		await renderHall();
+		const { queryClient } = await renderHall();
 		const meRequests = vi.fn();
 		answerMeWith(() => {
 			meRequests();
 			return HttpResponse.json({ data: buildUser() });
 		});
 
-		returnToTab();
+		await returnToTab(queryClient);
 
-		await waitFor(() => expect(meRequests).toHaveBeenCalledTimes(1));
+		expect(meRequests).toHaveBeenCalledTimes(1);
 		expect(screen.getByRole('heading', { name: 'Hala' })).toBeInTheDocument();
 	});
 
 	it('still checks the session on return to the tab without BroadcastChannel support', async () => {
 		vi.stubGlobal('BroadcastChannel', undefined);
-		await renderHall();
+		const { queryClient } = await renderHall();
 		answerMeWith(() => HttpResponse.json({ data: buildUser({ id: 99 }) }));
 
-		returnToTab();
+		await returnToTab(queryClient);
 
 		expect(
 			await screen.findByRole('heading', { name: 'Zaloguj się' }),

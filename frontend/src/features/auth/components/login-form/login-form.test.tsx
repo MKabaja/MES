@@ -105,6 +105,28 @@ describe('login screen', () => {
 		});
 	});
 
+	it('sends the login without surrounding spaces', async () => {
+		const loginBodies = vi.fn();
+		server.use(
+			http.post('*/api/v1/auth/login', async ({ request }) => {
+				loginBodies(await request.json());
+				return HttpResponse.json({ data: buildUser() });
+			}),
+		);
+		const { user } = await setup();
+
+		await user.type(screen.getByLabelText('Login'), '  Jkowal ');
+		await user.type(screen.getByLabelText('Hasło'), '1234');
+		await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+
+		await waitFor(() =>
+			expect(loginBodies).toHaveBeenCalledWith({
+				login: 'Jkowal',
+				password: '1234',
+			}),
+		);
+	});
+
 	it('asks for the missing fields without calling the API', async () => {
 		const { user, router } = await setup();
 

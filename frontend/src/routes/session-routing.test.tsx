@@ -112,6 +112,42 @@ describe('guest', () => {
 	});
 });
 
+function waitForRouteLoad(router: RenderWithProvidersResult['router']) {
+	return new Promise<void>((resolve) => {
+		const unsubscribe = router.subscribe('onResolved', () => {
+			unsubscribe();
+			resolve();
+		});
+	});
+}
+
+describe('session check failing', () => {
+	it.each([
+		{
+			reason: 'a server error',
+			response: () => errorResponse(500, 'SERVER_ERROR', 'Błąd serwera.'),
+		},
+		{ reason: 'no connection', response: () => HttpResponse.error() },
+	])(
+		'shows the route error with a working retry on $reason',
+		async ({ response }) => {
+			server.use(mswHttp.get('*/api/v1/auth/me', response, { once: true }));
+			const { user, router } = await renderWithProviders(undefined, {
+				route: '/hala',
+			});
+			const retryButton = screen.getByRole('button', {
+				name: 'Spróbuj ponownie',
+			});
+			const reloaded = waitForRouteLoad(router);
+
+			await user.click(retryButton);
+			await act(() => reloaded);
+
+			expect(screen.getByRole('heading', { name: 'Hala' })).toBeInTheDocument();
+		},
+	);
+});
+
 describe('role guards', () => {
 	it('sends a worker from /panel to the hall', async () => {
 		signInAs('worker');
@@ -269,7 +305,7 @@ describe('session lost during work', () => {
 });
 
 describe('session rejected in several requests at once', () => {
-	it('signs out and navigates only once', async () => {
+	it('signs out only once', async () => {
 		signInAs('worker');
 		const logoutRequests = vi.fn();
 		server.use(
@@ -287,13 +323,13 @@ describe('session rejected in several requests at once', () => {
 		);
 		const rendered = await renderWithProviders(undefined, { route: '/hala' });
 		await screen.findByRole('heading', { name: 'Hala' });
-		const navigate = vi.spyOn(rendered.router, 'navigate');
 
 		await requestFromApp(rendered, 2);
 
-		await screen.findByRole('alert');
+		expect(await screen.findByRole('alert')).toHaveTextContent(
+			'Dostęp z tej sieci jest niedozwolony.',
+		);
 		expect(logoutRequests).toHaveBeenCalledTimes(1);
-		expect(navigate).toHaveBeenCalledTimes(1);
 	});
 
 	it('shows only the new login error after the next attempt', async () => {

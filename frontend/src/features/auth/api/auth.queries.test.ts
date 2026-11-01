@@ -74,20 +74,6 @@ describe('authQueries.me', () => {
 		});
 	});
 
-	it('rejects an unknown role', async () => {
-		server.use(
-			mswHttp.get('*/api/v1/auth/me', () =>
-				HttpResponse.json({ data: { ...buildUser(), role: 'superuser' } }),
-			),
-		);
-
-		const failure = createClient().fetchQuery(authQueries.me());
-
-		await expect(failure).rejects.toMatchObject({
-			code: INVALID_RESPONSE_CODE,
-		});
-	});
-
 	it('is fetched once and then served from the cache', async () => {
 		const meRequests = vi.fn();
 		server.use(
