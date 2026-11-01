@@ -10,10 +10,10 @@ export type FieldProps = Omit<
 	'className' | 'children' | 'invalid'
 > & {
 	label: string;
-	hint?: string;
-	error?: string;
-	orientation?: FieldOrientation;
-	className?: string;
+	hint?: string | undefined;
+	error?: string | undefined;
+	orientation?: FieldOrientation | undefined;
+	className?: string | undefined;
 	children: ReactNode;
 };
 

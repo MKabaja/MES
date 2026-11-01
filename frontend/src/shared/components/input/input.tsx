@@ -6,9 +6,9 @@ import { inputContainerVariants, inputStyles } from './input.styles';
 
 export type InputProps = Omit<InputPrimitive.Props, 'className' | 'size'> &
 	VariantProps<typeof inputContainerVariants> & {
-		startIcon?: ReactNode;
-		endIcon?: ReactNode;
-		className?: string;
+		startIcon?: ReactNode | undefined;
+		endIcon?: ReactNode | undefined;
+		className?: string | undefined;
 	};
 
 /**

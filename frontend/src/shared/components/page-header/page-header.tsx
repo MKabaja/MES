@@ -7,8 +7,8 @@ export type PageHeaderProps = Omit<
 	'children' | 'title'
 > & {
 	title: string;
-	description?: string;
-	actions?: ReactNode;
+	description?: string | undefined;
+	actions?: ReactNode | undefined;
 };
 
 /**

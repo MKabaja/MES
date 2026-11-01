@@ -5,7 +5,10 @@ import { segmentedControlStyles } from './segmented-control.styles';
 export type SegmentedControlProps<Value extends string> = Omit<
 	RadioGroupPrimitive.Props<Value>,
 	'className'
-> & { size?: 'default' | 'terminal'; className?: string };
+> & {
+	size?: 'default' | 'terminal' | undefined;
+	className?: string | undefined;
+};
 
 /**
  * Renders a `radiogroup` of 2-4 mutually exclusive options navigable with arrow keys; give it an `aria-label`.

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Logo } from '@/shared/components/logo/logo';
 import { appShellStyles } from './app-shell.styles';
 
-export type BrandProps = { isCollapsed?: boolean };
+export type BrandProps = { isCollapsed?: boolean | undefined };
 
 export function Brand({ isCollapsed = false }: BrandProps) {
 	const { t } = useTranslation();

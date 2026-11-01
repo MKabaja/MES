@@ -9,7 +9,7 @@ import { getInitials } from './get-initials';
 export type UserPanelProps = {
 	user: AppShellUser;
 	onLogout: () => void;
-	isCollapsed?: boolean;
+	isCollapsed?: boolean | undefined;
 };
 
 export function UserPanel({

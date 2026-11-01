@@ -7,8 +7,8 @@ export type SelectTriggerProps = Omit<
 	SelectPrimitive.Trigger.Props,
 	'className' | 'children'
 > & {
-	placeholder?: string;
-	className?: string;
+	placeholder?: string | undefined;
+	className?: string | undefined;
 };
 
 /**

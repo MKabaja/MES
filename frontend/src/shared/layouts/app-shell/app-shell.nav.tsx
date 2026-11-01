@@ -5,7 +5,7 @@ import type { AppShellNavItem } from './app-shell.types';
 
 export type NavProps = {
 	items: AppShellNavItem[];
-	isCollapsed?: boolean;
+	isCollapsed?: boolean | undefined;
 	onNavigate?: (() => void) | undefined;
 };
 

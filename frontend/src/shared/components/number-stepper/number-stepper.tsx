@@ -28,10 +28,10 @@ export type NumberStepperProps = Omit<
 	NumberFieldPrimitive.Root.Props,
 	'className' | 'children' | 'size'
 > & {
-	size?: NumberStepperSize;
-	'aria-label'?: string;
-	inputMode?: HTMLAttributes<HTMLInputElement>['inputMode'];
-	className?: string;
+	size?: NumberStepperSize | undefined;
+	'aria-label'?: string | undefined;
+	inputMode?: HTMLAttributes<HTMLInputElement>['inputMode'] | undefined;
+	className?: string | undefined;
 };
 
 /**
