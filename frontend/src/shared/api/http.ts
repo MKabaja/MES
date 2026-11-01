@@ -1,9 +1,5 @@
 import type { ZodType } from 'zod';
-import {
-	API_BASE,
-	CSRF_COOKIE_PATH,
-	getUiLanguage,
-} from '@/shared/config/app.config';
+import { config, getUiLanguage } from '@/shared/config/app.config';
 import { assertNoPathTraversal } from './api-path';
 import {
 	hasLoadedCsrfCookie,
@@ -111,7 +107,7 @@ export async function ensureCsrfCookie(force = false): Promise<void> {
 }
 
 async function requestCsrfCookie(): Promise<void> {
-	const response = await fetchOrThrowNetworkError(CSRF_COOKIE_PATH, {
+	const response = await fetchOrThrowNetworkError(config.api.csrfCookiePath, {
 		credentials: 'same-origin',
 		headers: { Accept: 'application/json' },
 	});
@@ -125,7 +121,7 @@ async function sendRequest<TResponse>(
 	path: string,
 	{ method = 'GET', body, signal, headers }: HttpRequestOptions<TResponse>,
 ): Promise<Response> {
-	return fetchOrThrowNetworkError(`${API_BASE}${path}`, {
+	return fetchOrThrowNetworkError(`${config.api.baseUrl}${path}`, {
 		method,
 		body: serializeBody(body),
 		signal: signal ?? null,

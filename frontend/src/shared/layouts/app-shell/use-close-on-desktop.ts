@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import { DESKTOP_MEDIA_QUERY } from './app-shell.constants';
+import { config } from '@/shared/config/app.config';
 
 /**
  * Calls `onClose` whenever the viewport becomes desktop-wide, so a mobile-only overlay never outlives its breakpoint.
  */
 export function useCloseOnDesktop(onClose: () => void): void {
 	useEffect(() => {
-		const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY);
+		const mediaQuery = window.matchMedia(config.layout.desktopMediaQuery);
 
 		function handleChange(event: MediaQueryListEvent) {
 			if (event.matches) {

@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { HttpError } from '@/shared/api/http-error';
+import { config } from '@/shared/config/app.config';
 import type { User } from '../model/auth.types';
 import { fetchMe } from './auth.api';
 
@@ -27,6 +28,6 @@ export const authQueries = {
 		queryOptions({
 			queryKey: ['auth', 'me'] as const,
 			queryFn: ({ signal }) => fetchMeOrNull(signal),
-			staleTime: Number.POSITIVE_INFINITY,
+			staleTime: config.queries.sessionStaleTimeMilliseconds,
 		}),
 };

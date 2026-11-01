@@ -1,6 +1,6 @@
 import { tz, tzOffset } from '@date-fns/tz';
 import { format, isValid } from 'date-fns';
-import { PLANT_TIMEZONE } from '@/shared/config/app.config';
+import { config } from '@/shared/config/app.config';
 import { EMPTY_VALUE } from '@/shared/lib/format.constants';
 
 const SECONDS_PER_MINUTE = 60;
@@ -139,7 +139,8 @@ export function fromPlantIso(iso: string): PlantDateTime | null {
 
 function findPlantInstantCandidates(wallClockAsUtc: number): Date[] {
 	const offsetsInMinutes = [-MILLISECONDS_PER_DAY, MILLISECONDS_PER_DAY].map(
-		(shift) => tzOffset(PLANT_TIMEZONE, new Date(wallClockAsUtc + shift)),
+		(shift) =>
+			tzOffset(config.plant.timezone, new Date(wallClockAsUtc + shift)),
 	);
 	return offsetsInMinutes.map(
 		(offset) => new Date(wallClockAsUtc - offset * MILLISECONDS_PER_MINUTE),
@@ -155,7 +156,7 @@ function formatInPlantZone(iso: string, pattern: string): string {
 }
 
 function formatInstantInPlantZone(instant: Date, pattern: string): string {
-	return format(instant, pattern, { in: tz(PLANT_TIMEZONE) });
+	return format(instant, pattern, { in: tz(config.plant.timezone) });
 }
 
 function padTwoDigits(value: number): string {

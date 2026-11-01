@@ -1,4 +1,6 @@
-const XSRF_COOKIE_NAME = 'XSRF-TOKEN';
+import { config } from '@/shared/config/app.config';
+
+const XSRF_COOKIE_NAME = config.api.xsrfCookieName;
 
 let isCsrfCookieLoaded = false;
 
