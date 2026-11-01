@@ -438,23 +438,29 @@ describe('session check dropped from the cache', () => {
 });
 
 describe('logout', () => {
-	it('disables the logout button while the request is running', async () => {
+	it('blocks the logout button while the request is running and keeps it focused', async () => {
 		signInAs('worker');
+		const logoutRequests = vi.fn();
 		server.use(
 			mswHttp.post('*/api/v1/auth/logout', async () => {
+				logoutRequests();
 				await delay(150);
 				return new HttpResponse(null, { status: 204 });
 			}),
 		);
 		const { user } = await renderWithProviders(undefined, { route: '/hala' });
 		await screen.findByRole('heading', { name: 'Hala' });
+		const logoutButton = screen.getByRole('button', { name: 'Wyloguj' });
 
-		await user.click(screen.getByRole('button', { name: 'Wyloguj' }));
+		await user.click(logoutButton);
+		await user.click(logoutButton);
 
-		expect(screen.getByRole('button', { name: 'Wyloguj' })).toBeDisabled();
+		expect(logoutButton).toHaveAttribute('aria-disabled', 'true');
+		expect(logoutButton).toHaveFocus();
 		expect(
 			await screen.findByRole('heading', { name: 'Zaloguj się' }),
 		).toBeInTheDocument();
+		expect(logoutRequests).toHaveBeenCalledTimes(1);
 	});
 
 	it('clears the cache and lands on login without redirect', async () => {
@@ -512,7 +518,10 @@ describe('logout', () => {
 			await screen.findByText('Wystąpił błąd serwera.'),
 		).toBeInTheDocument();
 		expect(router.state.location.pathname).toBe('/hala');
-		expect(screen.getByRole('button', { name: 'Wyloguj' })).toBeEnabled();
+		expect(screen.getByRole('button', { name: 'Wyloguj' })).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 });
 
@@ -726,5 +735,33 @@ describe('session change', () => {
 		await waitFor(() =>
 			expect(screen.queryByText('Komunikat sprzed logowania')).toBeNull(),
 		);
+	});
+});
+
+describe('manual logout answered with a session rejection', () => {
+	it('signs out with the server message and without a toast', async () => {
+		signInAs('worker');
+		let logoutAttempts = 0;
+		server.use(
+			mswHttp.post('*/api/v1/auth/logout', () => {
+				logoutAttempts += 1;
+				return logoutAttempts === 1
+					? errorResponse(403, 'ACCOUNT_INACTIVE', 'Konto jest nieaktywne.')
+					: new HttpResponse(null, { status: 204 });
+			}),
+		);
+		const { user } = await renderWithProviders(undefined, { route: '/hala' });
+		await screen.findByRole('heading', { name: 'Hala' });
+
+		await user.click(screen.getByRole('button', { name: 'Wyloguj' }));
+		await screen.findByText('Wylogowywanie…');
+		act(() => {
+			window.dispatchEvent(new Event('online'));
+		});
+
+		expect(await screen.findByRole('alert')).toHaveTextContent(
+			'Konto jest nieaktywne.',
+		);
+		expect(screen.getAllByText('Konto jest nieaktywne.')).toHaveLength(1);
 	});
 });

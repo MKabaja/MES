@@ -43,6 +43,7 @@ export function UserPanel({
 					aria-label={t('session.logout')}
 					onClick={onLogout}
 					disabled={isLoggingOut}
+					focusableWhenDisabled
 					className={appShellStyles.iconButton}
 				>
 					<LogOut aria-hidden="true" />

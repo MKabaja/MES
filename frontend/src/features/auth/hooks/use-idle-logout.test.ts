@@ -169,4 +169,21 @@ describe('useIdleLogout', () => {
 
 		expect(onTimeout).toHaveBeenCalledTimes(1);
 	});
+
+	it('restarts the deadline when the idle time changes', () => {
+		const onTimeout = vi.fn();
+		const { rerender } = renderHook(
+			({ idleMinutes }) =>
+				useIdleLogout({ enabled: true, idleMinutes, onTimeout }),
+			{ initialProps: { idleMinutes: 5 } },
+		);
+		advance(2 * MINUTE);
+
+		rerender({ idleMinutes: 1 });
+		advance(MINUTE - SECOND);
+		expect(onTimeout).not.toHaveBeenCalled();
+
+		advance(SECOND);
+		expect(onTimeout).toHaveBeenCalledTimes(1);
+	});
 });

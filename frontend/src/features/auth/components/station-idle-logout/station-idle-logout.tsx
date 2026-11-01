@@ -9,7 +9,7 @@ export type StationIdleLogoutProps = { onTimeout: () => void };
 
 /**
  * Logs out an idle shared hall station through `onTimeout`, showing a countdown dialog first.
- * Does nothing on devices not marked as a station or and uses the contract default idle time until the setting loads or when it cannot be loaded.
+ * Does nothing on devices not marked as a station and uses the contract default idle time until the setting loads or when it cannot be loaded.
  */
 export function StationIdleLogout({ onTimeout }: StationIdleLogoutProps) {
 	const { isStationMode } = useStationMode();

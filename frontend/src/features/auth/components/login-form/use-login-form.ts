@@ -22,6 +22,7 @@ export type LoginFormState = {
 /**
  * Drives the login form: local validation, the sign-in request and the redirect after success.
  * A successful sign-in drops the router cache and all toasts left from the previous session.
+ * A submit while the previous one is still validating or signing in is ignored.
  *
  * `redirect` is followed only when it is a same-origin relative path, otherwise the user lands on `/`.
  */
@@ -49,10 +50,14 @@ export function useLoginForm(
 		});
 	});
 
-	function submit(event?: BaseSyntheticEvent): Promise<void> {
+	async function submit(event?: BaseSyntheticEvent): Promise<void> {
+		if (form.formState.isSubmitting || login.isPending) {
+			event?.preventDefault();
+			return;
+		}
 		login.reset();
 		onSubmitAttempt?.();
-		return submitValidated(event);
+		await submitValidated(event);
 	}
 
 	function togglePasswordVisibility(): void {

@@ -1,6 +1,7 @@
-import { screen, waitFor } from '@testing-library/react';
-import { HttpResponse, http } from 'msw';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { delay, HttpResponse, http } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
+import { buildUser } from '@/test/fixtures/user';
 import { server } from '@/test/msw/server';
 import { renderWithProviders } from '@/test/render';
 
@@ -34,6 +35,27 @@ async function submitCredentials(
 }
 
 describe('login screen', () => {
+	it('sends one request when the form is submitted twice in a row', async () => {
+		const loginRequests = vi.fn();
+		server.use(
+			http.post('*/api/v1/auth/login', async () => {
+				loginRequests();
+				await delay(50);
+				return HttpResponse.json({ data: buildUser() });
+			}),
+		);
+		const { user, router } = await setup();
+		await user.type(screen.getByLabelText('Login'), 'Jkowal');
+		await user.type(screen.getByLabelText('Hasło'), '1234');
+		const submitButton = screen.getByRole('button', { name: 'Zaloguj się' });
+
+		fireEvent.click(submitButton);
+		fireEvent.click(submitButton);
+
+		await waitFor(() => expect(router.state.location.pathname).toBe('/hala'));
+		expect(loginRequests).toHaveBeenCalledTimes(1);
+	});
+
 	it('sends the user to the redirect path after signing in', async () => {
 		const { user, router } = await setup(
 			'/login?redirect=%2Fzlecenia%3Fpage%3D2',

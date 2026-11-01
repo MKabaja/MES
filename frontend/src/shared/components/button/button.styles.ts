@@ -4,8 +4,9 @@ export const buttonVariants = cva(
 	[
 		'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-sm border font-sans font-semibold whitespace-nowrap transition-colors select-none',
 		'[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:[stroke-width:1.7]',
-		'enabled:active:translate-y-px enabled:active:shadow-inset',
+		'enabled:not-aria-disabled:active:translate-y-px enabled:not-aria-disabled:active:shadow-inset',
 		'disabled:cursor-not-allowed disabled:border-border disabled:bg-surface disabled:text-text-3 disabled:shadow-none',
+		'aria-disabled:cursor-not-allowed aria-disabled:border-border aria-disabled:bg-surface aria-disabled:text-text-3 aria-disabled:shadow-none',
 	],
 	{
 		variants: {

@@ -46,6 +46,7 @@ export function TerminalShell({
 					size="terminal"
 					onClick={onLogout}
 					disabled={isLoggingOut}
+					focusableWhenDisabled
 					className={terminalShellStyles.logout}
 				>
 					<LogOut aria-hidden="true" />
