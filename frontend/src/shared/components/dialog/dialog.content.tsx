@@ -5,12 +5,25 @@ import { Button } from '@/shared/components/button/button';
 import { cn } from '@/shared/lib/utils';
 import { dialogStyles } from './dialog.styles';
 
+export type DialogDensity = 'default' | 'terminal';
+
+type CloseButtonSize = 'icon-sm' | 'icon-terminal';
+
+type CloseButtonSizeByDensity = Record<DialogDensity, CloseButtonSize>;
+
+const closeButtonSizeByDensity: CloseButtonSizeByDensity = {
+	default: 'icon-sm',
+	terminal: 'icon-terminal',
+};
+
 export type DialogContentProps = Omit<
 	DialogPrimitive.Popup.Props,
 	'title' | 'className'
 > & {
 	title: string;
 	className?: string | undefined;
+	/** `terminal` enlarges the close button to a touch target for the hall terminal. */
+	density?: DialogDensity | undefined;
 };
 
 /**
@@ -30,6 +43,7 @@ export function DialogContent({
 	title,
 	children,
 	className,
+	density = 'default',
 	...props
 }: DialogContentProps) {
 	const { t } = useTranslation();
@@ -49,7 +63,7 @@ export function DialogContent({
 						render={
 							<Button
 								variant="secondary"
-								size="icon-sm"
+								size={closeButtonSizeByDensity[density]}
 								aria-label={t('dialog.close')}
 							/>
 						}
