@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/render';
 import { NumberStepper } from './number-stepper';
 
@@ -32,12 +32,12 @@ function QuantityStepper({
 }
 
 describe('NumberStepper', () => {
-	it('uses the numeric keypad', async () => {
+	it('uses the decimal keypad', async () => {
 		await renderWithProviders(<QuantityStepper initialValue={5} />);
 
 		expect(screen.getByRole('textbox', { name: 'Ilość' })).toHaveAttribute(
 			'inputmode',
-			'numeric',
+			'decimal',
 		);
 	});
 
@@ -87,5 +87,17 @@ describe('NumberStepper', () => {
 		expect(screen.getByRole('textbox', { name: 'Ilość' })).toHaveValue('3');
 		expect(screen.getByRole('button', { name: 'Zwiększ' })).toBeDisabled();
 		expect(screen.getByRole('button', { name: 'Zmniejsz' })).toBeDisabled();
+	});
+
+	it('parses a decimal quantity typed with a comma in Polish', async () => {
+		const onValueChange = vi.fn();
+		const { user } = await renderWithProviders(
+			<NumberStepper aria-label="Ilość" onValueChange={onValueChange} />,
+		);
+
+		await user.type(screen.getByRole('textbox', { name: 'Ilość' }), '2,5');
+		await user.tab();
+
+		expect(onValueChange).toHaveBeenLastCalledWith(2.5, expect.anything());
 	});
 });
