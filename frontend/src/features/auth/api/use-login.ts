@@ -24,6 +24,7 @@ export function useLogin(): UseLoginResult {
 	return useMutation<User, HttpError, LoginCredentials>({
 		mutationFn: login,
 		onSuccess: (user) => {
+			queryClient.clear();
 			queryClient.setQueryData(authQueries.me().queryKey, user);
 		},
 	});

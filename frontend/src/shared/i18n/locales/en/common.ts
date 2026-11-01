@@ -7,6 +7,8 @@ export const common: typeof polishCommon = {
 		backToStart: 'Back to start',
 		errorTitle: 'Something went wrong',
 		retry: 'Try again',
+		forbiddenTitle: 'Access denied',
+		forbiddenDescription: 'You do not have permission to view this page.',
 	},
 	numberStepper: {
 		decrease: 'Decrease',
@@ -40,6 +42,14 @@ export const common: typeof polishCommon = {
 	},
 	session: {
 		logout: 'Log out',
+		role: {
+			admin: 'Manager',
+			worker: 'Hall worker',
+		},
+	},
+	nav: {
+		panel: 'Dashboard',
+		hall: 'Hall',
 	},
 	appShell: {
 		mainMenu: 'Main menu',
@@ -65,8 +75,5 @@ export const common: typeof polishCommon = {
 		stationMode: {
 			label: 'This device is a shop-floor station',
 		},
-	},
-	home: {
-		title: 'OK',
 	},
 };

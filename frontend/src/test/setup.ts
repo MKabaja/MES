@@ -7,6 +7,11 @@ import { server } from './msw/server';
 beforeAll(() => {
 	server.listen({ onUnhandledFrame: 'error' });
 	vi.stubGlobal('scrollTo', vi.fn());
+	vi.stubGlobal('matchMedia', () => ({
+		matches: false,
+		addEventListener: () => {},
+		removeEventListener: () => {},
+	}));
 });
 
 afterEach(async () => {

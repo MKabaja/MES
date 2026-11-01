@@ -10,12 +10,15 @@ import { StationModeToggle } from '../station-mode-toggle/station-mode-toggle';
 import { loginFormStyles } from './login-form.styles';
 import { useLoginForm } from './use-login-form';
 
-export type LoginFormProps = { redirect?: string | undefined };
+export type LoginFormProps = {
+	redirect?: string | undefined;
+	onSubmitAttempt?: (() => void) | undefined;
+};
 
 /**
  * Renders the sign-in form; a failed attempt shows one message under the button and marks both fields invalid.
  */
-export function LoginForm({ redirect }: LoginFormProps) {
+export function LoginForm({ redirect, onSubmitAttempt }: LoginFormProps) {
 	const { t } = useTranslation();
 	const {
 		form,
@@ -24,7 +27,7 @@ export function LoginForm({ redirect }: LoginFormProps) {
 		serverErrorMessage,
 		isPasswordVisible,
 		togglePasswordVisibility,
-	} = useLoginForm(redirect);
+	} = useLoginForm(redirect, onSubmitAttempt);
 	const { register, formState } = form;
 	const hasServerError = serverErrorMessage !== undefined;
 

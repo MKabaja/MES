@@ -15,9 +15,15 @@ export type MobileMenuProps = {
 	user: AppShellUser;
 	navItems: AppShellNavItem[];
 	onLogout: () => void;
+	isLoggingOut: boolean;
 };
 
-export function MobileMenu({ user, navItems, onLogout }: MobileMenuProps) {
+export function MobileMenu({
+	user,
+	navItems,
+	onLogout,
+	isLoggingOut,
+}: MobileMenuProps) {
 	const { t } = useTranslation();
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -65,7 +71,11 @@ export function MobileMenu({ user, navItems, onLogout }: MobileMenuProps) {
 						</DialogPrimitive.Close>
 					</div>
 					<Nav items={navItems} onNavigate={closeMenu} />
-					<UserPanel user={user} onLogout={onLogout} />
+					<UserPanel
+						user={user}
+						onLogout={onLogout}
+						isLoggingOut={isLoggingOut}
+					/>
 				</DialogPrimitive.Popup>
 			</DialogPrimitive.Portal>
 		</Dialog>

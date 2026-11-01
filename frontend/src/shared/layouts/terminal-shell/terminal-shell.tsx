@@ -11,6 +11,7 @@ import { useCurrentTime } from './use-current-time';
 export type TerminalShellProps = {
 	operatorName: string;
 	onLogout: () => void;
+	isLoggingOut?: boolean | undefined;
 	children: ReactNode;
 };
 
@@ -21,6 +22,7 @@ export type TerminalShellProps = {
 export function TerminalShell({
 	operatorName,
 	onLogout,
+	isLoggingOut = false,
 	children,
 }: TerminalShellProps) {
 	const { t } = useTranslation();
@@ -43,6 +45,7 @@ export function TerminalShell({
 					variant="secondary"
 					size="terminal"
 					onClick={onLogout}
+					disabled={isLoggingOut}
 					className={terminalShellStyles.logout}
 				>
 					<LogOut aria-hidden="true" />

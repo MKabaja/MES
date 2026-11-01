@@ -3,39 +3,12 @@ import {
 	useMutation,
 	useQueryClient,
 } from '@tanstack/react-query';
-import { resetCsrfCookie } from '@/shared/api/csrf';
-import { ensureCsrfCookie } from '@/shared/api/http';
-import { HttpError, NETWORK_ERROR_CODE } from '@/shared/api/http-error';
-import { logout } from './auth.api';
+import type { HttpError } from '@/shared/api/http-error';
+import { logoutIgnoringLostSession, refreshCsrfCookie } from './end-session';
 
 export type UseLogoutResult = UseMutationResult<void, HttpError, void>;
 
-const STATUS_UNAUTHORIZED = 401;
-
-function isAlreadySignedOut(error: unknown): boolean {
-	return (
-		error instanceof HttpError &&
-		(error.status === STATUS_UNAUTHORIZED || error.code === NETWORK_ERROR_CODE)
-	);
-}
-
-async function logoutIgnoringLostSession(): Promise<void> {
-	try {
-		await logout();
-	} catch (error) {
-		if (!isAlreadySignedOut(error)) {
-			throw error;
-		}
-	}
-}
-
-async function refreshCsrfCookie(): Promise<void> {
-	try {
-		await ensureCsrfCookie(true);
-	} catch {
-		resetCsrfCookie();
-	}
-}
+export const LOGOUT_MUTATION_KEY = ['auth', 'logout'] as const;
 
 /**
  * Mutation that signs out, clears the whole query cache and fetches a fresh CSRF cookie.
@@ -47,6 +20,7 @@ async function refreshCsrfCookie(): Promise<void> {
 export function useLogout(): UseLogoutResult {
 	const queryClient = useQueryClient();
 	return useMutation<void, HttpError, void>({
+		mutationKey: LOGOUT_MUTATION_KEY,
 		mutationFn: logoutIgnoringLostSession,
 		onSuccess: async () => {
 			queryClient.clear();

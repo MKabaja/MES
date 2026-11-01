@@ -5,7 +5,12 @@ import { mockCookies } from '@/test/cookies';
 import { server } from '@/test/msw/server';
 import { setUiLanguageReader } from '../config/app.config';
 import { markCsrfCookieLoaded, resetCsrfCookie } from './csrf';
-import { ensureCsrfCookie, http, setUnauthorizedHandler } from './http';
+import {
+	ensureCsrfCookie,
+	http,
+	setSessionRejectedHandler,
+	setUnauthorizedHandler,
+} from './http';
 import { HttpError } from './http-error';
 import { idempotencyHeaders } from './idempotency';
 
@@ -26,6 +31,7 @@ async function captureError(request: Promise<unknown>): Promise<HttpError> {
 beforeEach(() => {
 	resetCsrfCookie();
 	setUnauthorizedHandler(() => {});
+	setSessionRejectedHandler(() => {});
 	setUiLanguageReader(() => 'pl');
 });
 
@@ -381,6 +387,34 @@ describe('http', () => {
 
 			expect(onUnauthorized).toHaveBeenCalledOnce();
 			expect(error.code).toBe('UNAUTHENTICATED');
+		});
+
+		it('calls the session rejected handler for ACCOUNT_INACTIVE but not for FORBIDDEN', async () => {
+			const onSessionRejected = vi.fn();
+			setSessionRejectedHandler(onSessionRejected);
+			server.use(
+				mswHttp.get('*/api/v1/items', () =>
+					HttpResponse.json(
+						{ message: 'Konto jest nieaktywne.', code: 'ACCOUNT_INACTIVE' },
+						{ status: 403 },
+					),
+				),
+				mswHttp.get('*/api/v1/other', () =>
+					HttpResponse.json(
+						{ message: 'Brak uprawnień.', code: 'FORBIDDEN' },
+						{ status: 403 },
+					),
+				),
+			);
+
+			await captureError(http('/other', { schema: itemSchema }));
+			expect(onSessionRejected).not.toHaveBeenCalled();
+
+			await captureError(http('/items', { schema: itemSchema }));
+			expect(onSessionRejected).toHaveBeenCalledOnce();
+			expect(onSessionRejected.mock.calls[0]?.[0]).toMatchObject({
+				code: 'ACCOUNT_INACTIVE',
+			});
 		});
 
 		it('does not call onUnauthorized for other statuses', async () => {

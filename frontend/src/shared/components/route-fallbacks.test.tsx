@@ -71,6 +71,27 @@ describe('RouteError', () => {
 	});
 });
 
+describe('RouteError for 403 FORBIDDEN', () => {
+	it('shows the access denied page instead of the retry prompt', async () => {
+		server.use(
+			http.get('*/api/v1/items', () =>
+				HttpResponse.json(
+					{ message: 'Brak uprawnień.', code: 'FORBIDDEN' },
+					{ status: 403 },
+				),
+			),
+		);
+		renderFailingRoute();
+
+		expect(
+			await screen.findByRole('heading', { name: 'Brak dostępu' }),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: /spróbuj ponownie/i }),
+		).not.toBeInTheDocument();
+	});
+});
+
 describe('RoutePending', () => {
 	it('exposes a status region', () => {
 		render(<RoutePending />);

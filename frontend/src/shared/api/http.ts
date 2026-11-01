@@ -13,6 +13,7 @@ import {
 import {
 	HttpError,
 	INVALID_RESPONSE_CODE,
+	isSessionRejectedError,
 	NETWORK_ERROR_CODE,
 	parseApiError,
 } from './http-error';
@@ -28,6 +29,7 @@ export type HttpRequestOptions<TResponse> = {
 };
 
 type UnauthorizedHandler = () => void;
+type SessionRejectedHandler = (error: HttpError) => void;
 
 const STATUS_NO_CONTENT = 204;
 const STATUS_UNAUTHORIZED = 401;
@@ -50,6 +52,7 @@ const CLIENT_OWNED_HEADERS = [
 ] as const;
 
 let handleUnauthorized: UnauthorizedHandler = () => {};
+let handleSessionRejected: SessionRejectedHandler = () => {};
 let pendingCsrfRequest: Promise<void> | null = null;
 
 /**
@@ -57,6 +60,15 @@ let pendingCsrfRequest: Promise<void> | null = null;
  */
 export function setUnauthorizedHandler(handler: UnauthorizedHandler): void {
 	handleUnauthorized = handler;
+}
+
+/**
+ * Registers the callback run on every 403 that rejects the whole session (`ACCOUNT_INACTIVE`, `NETWORK_NOT_ALLOWED`), before the `HttpError` is thrown.
+ */
+export function setSessionRejectedHandler(
+	handler: SessionRejectedHandler,
+): void {
+	handleSessionRejected = handler;
 }
 
 /**
@@ -172,11 +184,15 @@ async function buildHttpError(response: Response): Promise<HttpError> {
 	if (response.status === STATUS_UNAUTHORIZED) {
 		handleUnauthorized();
 	}
-	return parseApiError(
+	const error = parseApiError(
 		response.status,
 		await readJsonOrNull(response),
 		response.headers.get('Retry-After'),
 	);
+	if (isSessionRejectedError(error)) {
+		handleSessionRejected(error);
+	}
+	return error;
 }
 
 async function readJsonOrNull(response: Response): Promise<unknown> {

@@ -7,7 +7,7 @@ import { AppShell } from './app-shell';
 import type { AppShellNavItem } from './app-shell.types';
 
 const navItems: AppShellNavItem[] = [
-	{ to: '/', label: 'Panel', icon: LayoutDashboard, counter: 3 },
+	{ to: '/login', label: 'Panel', icon: LayoutDashboard, counter: 3 },
 ];
 
 type ChangeListener = (event: { matches: boolean }) => void;
@@ -97,7 +97,7 @@ describe('AppShell', () => {
 	});
 
 	it('marks the item of the current page with aria-current', async () => {
-		await renderWithProviders(buildShell(), { route: '/' });
+		await renderWithProviders(buildShell(), { route: '/login' });
 
 		expect(screen.getByRole('link', { name: /panel/i })).toHaveAttribute(
 			'aria-current',
@@ -118,7 +118,7 @@ describe('AppShell', () => {
 			<AppShell
 				user={{ name: 'Jan Kowalski', roleLabel: 'Kierownik' }}
 				navItems={[
-					{ to: '/', label: 'Panel', icon: LayoutDashboard, counter: 0 },
+					{ to: '/login', label: 'Panel', icon: LayoutDashboard, counter: 0 },
 				]}
 				onLogout={vi.fn()}
 			>

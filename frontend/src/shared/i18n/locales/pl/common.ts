@@ -5,6 +5,8 @@ export const common = {
 		backToStart: 'Wróć do początku',
 		errorTitle: 'Coś poszło nie tak',
 		retry: 'Spróbuj ponownie',
+		forbiddenTitle: 'Brak dostępu',
+		forbiddenDescription: 'Nie masz uprawnień do tej strony.',
 	},
 	numberStepper: {
 		decrease: 'Zmniejsz',
@@ -38,6 +40,14 @@ export const common = {
 	},
 	session: {
 		logout: 'Wyloguj',
+		role: {
+			admin: 'Kierownik',
+			worker: 'Pracownik hali',
+		},
+	},
+	nav: {
+		panel: 'Panel',
+		hall: 'Hala',
 	},
 	appShell: {
 		mainMenu: 'Menu główne',
@@ -62,8 +72,5 @@ export const common = {
 		stationMode: {
 			label: 'To urządzenie to stanowisko na hali',
 		},
-	},
-	home: {
-		title: 'OK',
 	},
 };

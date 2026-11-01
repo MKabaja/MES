@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { server } from '@/test/msw/server';
 import { renderWithProviders } from '@/test/render';
 
@@ -46,12 +46,12 @@ describe('login screen', () => {
 		);
 	});
 
-	it('sends the user to / when there is no redirect', async () => {
+	it('sends the user to the home page of the role when there is no redirect', async () => {
 		const { user, router } = await setup();
 
 		await submitCredentials(user);
 
-		await waitFor(() => expect(router.state.location.pathname).toBe('/'));
+		await waitFor(() => expect(router.state.location.pathname).toBe('/hala'));
 		expect(router.state.location.search).toEqual({});
 	});
 
@@ -65,8 +65,22 @@ describe('login screen', () => {
 
 		await submitCredentials(user);
 
-		await waitFor(() => expect(router.state.location.pathname).toBe('/'));
+		await waitFor(() => expect(router.state.location.pathname).toBe('/hala'));
 		expect(router.state.location.search).toEqual({});
+	});
+
+	it('drops data cached for a previous user when signing in', async () => {
+		const { user, queryClient } = await setup();
+		queryClient.setQueryData(['hall', 'orders'], [{ id: 1 }]);
+
+		await submitCredentials(user);
+
+		await waitFor(() =>
+			expect(queryClient.getQueryData(['hall', 'orders'])).toBeUndefined(),
+		);
+		expect(queryClient.getQueryData(['auth', 'me'])).toMatchObject({
+			login: 'Jkowal',
+		});
 	});
 
 	it('asks for the missing fields without calling the API', async () => {
@@ -127,6 +141,13 @@ describe('login screen', () => {
 		'shows the server message for $code under the button and marks both fields invalid',
 		async (response) => {
 			failLoginWith(response);
+			const logoutRequests = vi.fn();
+			server.use(
+				http.post('*/api/v1/auth/logout', () => {
+					logoutRequests();
+					return new HttpResponse(null, { status: 204 });
+				}),
+			);
 			const { user } = await setup();
 
 			await submitCredentials(user);
@@ -134,6 +155,7 @@ describe('login screen', () => {
 			expect(await screen.findByRole('alert')).toHaveTextContent(
 				response.message,
 			);
+			expect(logoutRequests).not.toHaveBeenCalled();
 			expect(screen.getByLabelText('Login')).toBeInvalid();
 			expect(screen.getByLabelText('Hasło')).toBeInvalid();
 		},

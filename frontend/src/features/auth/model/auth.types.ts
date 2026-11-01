@@ -11,3 +11,9 @@ export type LoginCredentials = {
 };
 
 export type LoginFormValues = z.infer<typeof loginFormSchema>;
+
+declare module '@tanstack/history' {
+	interface HistoryState {
+		sessionEndedMessage?: string;
+	}
+}

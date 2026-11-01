@@ -14,6 +14,13 @@ export const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
 export const INVALID_RESPONSE_CODE = 'INVALID_RESPONSE';
 export const SERVER_ERROR_CODE = 'SERVER_ERROR';
 
+const FORBIDDEN_CODE = 'FORBIDDEN';
+const SESSION_REJECTION_CODES: ReadonlySet<string> = new Set([
+	'ACCOUNT_INACTIVE',
+	'NETWORK_NOT_ALLOWED',
+]);
+const STATUS_FORBIDDEN = 403;
+
 const WHOLE_SECONDS_PATTERN = /^\d+$/;
 
 const FALLBACK_SERVER_MESSAGE =
@@ -76,6 +83,28 @@ export function parseApiError(
 		fieldErrors: parsed.data.errors,
 		retryAfterSeconds,
 	});
+}
+
+/**
+ * Tells whether `error` is a `403 FORBIDDEN`: the user is signed in but may not see the resource.
+ */
+export function isForbiddenError(error: unknown): error is HttpError {
+	return (
+		error instanceof HttpError &&
+		error.status === STATUS_FORBIDDEN &&
+		error.code === FORBIDDEN_CODE
+	);
+}
+
+/**
+ * Tells whether `error` is a `403` that makes the whole session unusable (`ACCOUNT_INACTIVE`, `NETWORK_NOT_ALLOWED`).
+ */
+export function isSessionRejectedError(error: unknown): error is HttpError {
+	return (
+		error instanceof HttpError &&
+		error.status === STATUS_FORBIDDEN &&
+		SESSION_REJECTION_CODES.has(error.code)
+	);
 }
 
 function parseRetryAfterSeconds(header: string | null): number | undefined {

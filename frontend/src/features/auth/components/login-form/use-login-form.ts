@@ -23,7 +23,10 @@ export type LoginFormState = {
  *
  * `redirect` is followed only when it is a same-origin relative path, otherwise the user lands on `/`.
  */
-export function useLoginForm(redirect: string | undefined): LoginFormState {
+export function useLoginForm(
+	redirect: string | undefined,
+	onSubmitAttempt?: () => void,
+): LoginFormState {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const login = useLogin();
@@ -42,6 +45,7 @@ export function useLoginForm(redirect: string | undefined): LoginFormState {
 
 	function submit(event?: BaseSyntheticEvent): Promise<void> {
 		login.reset();
+		onSubmitAttempt?.();
 		return submitValidated(event);
 	}
 

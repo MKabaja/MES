@@ -10,12 +10,14 @@ export type UserPanelProps = {
 	user: AppShellUser;
 	onLogout: () => void;
 	isCollapsed?: boolean | undefined;
+	isLoggingOut?: boolean | undefined;
 };
 
 export function UserPanel({
 	user,
 	onLogout,
 	isCollapsed = false,
+	isLoggingOut = false,
 }: UserPanelProps) {
 	const { t } = useTranslation();
 
@@ -40,6 +42,7 @@ export function UserPanel({
 					size="icon-sm"
 					aria-label={t('session.logout')}
 					onClick={onLogout}
+					disabled={isLoggingOut}
 					className={appShellStyles.iconButton}
 				>
 					<LogOut aria-hidden="true" />
