@@ -8,6 +8,10 @@ export const common: typeof polishCommon = {
 		errorTitle: 'Something went wrong',
 		retry: 'Try again',
 	},
+	numberStepper: {
+		decrease: 'Decrease',
+		increase: 'Increase',
+	},
 	home: {
 		title: 'OK',
 	},

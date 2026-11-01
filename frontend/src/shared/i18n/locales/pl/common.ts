@@ -6,6 +6,10 @@ export const common = {
 		errorTitle: 'Coś poszło nie tak',
 		retry: 'Spróbuj ponownie',
 	},
+	numberStepper: {
+		decrease: 'Zmniejsz',
+		increase: 'Zwiększ',
+	},
 	home: {
 		title: 'OK',
 	},
