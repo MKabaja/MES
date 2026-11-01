@@ -32,6 +32,19 @@ export const common = {
 		paused: 'Pauza',
 		completed: 'Zakończona',
 	},
+	brand: {
+		name: 'MES',
+		tagline: 'Spawalnia',
+	},
+	session: {
+		logout: 'Wyloguj',
+	},
+	appShell: {
+		mainMenu: 'Menu główne',
+		collapseMenu: 'Zwiń menu',
+		expandMenu: 'Rozwiń menu',
+		openMenu: 'Otwórz menu',
+	},
 	home: {
 		title: 'OK',
 	},
