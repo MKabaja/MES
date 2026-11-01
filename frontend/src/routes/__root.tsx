@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import { AppDevtools } from '@/shared/components/app-devtools';
+import { Toaster } from '@/shared/components/toaster/toaster';
 
 export type RouterContext = { queryClient: QueryClient };
 
@@ -12,6 +13,7 @@ function RootLayout() {
 	return (
 		<>
 			<Outlet />
+			<Toaster />
 			<AppDevtools />
 		</>
 	);
