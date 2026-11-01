@@ -10,6 +10,21 @@ export const common = {
 		decrease: 'Zmniejsz',
 		increase: 'Zwiększ',
 	},
+	pagination: {
+		label: 'Stronicowanie',
+		previous: 'Poprzednia strona',
+		next: 'Następna strona',
+		page: 'Strona {{page}}',
+	},
+	table: {
+		loading: 'Ładowanie danych…',
+	},
+	operationStatus: {
+		pending: 'Zaplanowana',
+		in_progress: 'W toku',
+		paused: 'Pauza',
+		completed: 'Zakończona',
+	},
 	home: {
 		title: 'OK',
 	},

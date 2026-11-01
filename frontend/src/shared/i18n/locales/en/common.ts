@@ -12,6 +12,21 @@ export const common: typeof polishCommon = {
 		decrease: 'Decrease',
 		increase: 'Increase',
 	},
+	pagination: {
+		label: 'Pagination',
+		previous: 'Previous page',
+		next: 'Next page',
+		page: 'Page {{page}}',
+	},
+	table: {
+		loading: 'Loading data…',
+	},
+	operationStatus: {
+		pending: 'Planned',
+		in_progress: 'In progress',
+		paused: 'Paused',
+		completed: 'Completed',
+	},
 	home: {
 		title: 'OK',
 	},
