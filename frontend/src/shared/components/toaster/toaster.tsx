@@ -31,7 +31,7 @@ export function Toaster() {
 		<SonnerToaster
 			theme="dark"
 			position="bottom-right"
-			duration={5000}
+			duration={4000}
 			containerAriaLabel={t('toaster.label')}
 			icons={toastIcons}
 			toastOptions={toastOptions}
