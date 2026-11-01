@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 import { type BaseSyntheticEvent, useState } from 'react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { useLogin } from '../../api/use-login';
 import { loginFormSchema } from '../../model/auth.schemas';
 import type { LoginFormValues } from '../../model/auth.types';
@@ -20,6 +21,7 @@ export type LoginFormState = {
 
 /**
  * Drives the login form: local validation, the sign-in request and the redirect after success.
+ * A successful sign-in drops the router cache and all toasts left from the previous session.
  *
  * `redirect` is followed only when it is a same-origin relative path, otherwise the user lands on `/`.
  */
@@ -29,6 +31,7 @@ export function useLoginForm(
 ): LoginFormState {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
+	const router = useRouter();
 	const login = useLogin();
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 	const form = useForm<LoginFormValues>({
@@ -38,8 +41,11 @@ export function useLoginForm(
 
 	const submitValidated = form.handleSubmit((values) => {
 		login.mutate(values, {
-			onSuccess: () =>
-				navigate({ href: getSafeRedirectPath(redirect), replace: true }),
+			onSuccess: () => {
+				router.clearCache();
+				toast.dismiss();
+				return navigate({ href: getSafeRedirectPath(redirect), replace: true });
+			},
 		});
 	});
 

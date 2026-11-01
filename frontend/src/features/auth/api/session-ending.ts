@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { AnyRouter } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import type { HttpError } from '@/shared/api/http-error';
 import { config } from '@/shared/config/app.config';
 import { MILLISECONDS_PER_SECOND } from '@/shared/lib/time.constants';
@@ -42,11 +43,12 @@ let currentSessionEnding: SessionEnding | null = null;
 
 /**
  * Creates the single owner of every way a session ends and makes it current, disposing the previous one; call once at startup.
+ * Every ending drops the query cache, the router cache and all toasts.
  *
  * - `signOut`: one logout attempt with the page still visible; rejects with `HttpError` on a failure other than a lost connection.
- * - `forceSignOut` (idle station, rejected session) and a lost connection: clears all cached data, shows the `awaitingServerLogout` curtain and retries
+ * - `forceSignOut` (idle station, rejected session) and a lost connection: hides the data at once, shows the `awaitingServerLogout` curtain and retries
  *   the logout every `config.session.logoutRetrySeconds` and on `online`, one request at a time, until the server answers `204` or `401`.
- * - `expireSession` (`401`): clears the cache and moves to `/login?redirect=<current path>`. Late calls are ignored until `me` holds a user again.
+ * - `expireSession` (`401`): moves to `/login?redirect=<current path>`. Late calls are ignored until `me` holds a user again.
  */
 export function startSessionEnding(
 	dependencies: SessionEndingDependencies,
@@ -123,8 +125,7 @@ function createSessionEnding({
 		}
 		setState(LEAVING_STATE);
 		const redirectPath = router.state.location.href;
-		queryClient.clear();
-		router.clearCache();
+		clearSessionData();
 		try {
 			await router.navigate({
 				to: LOGIN_PATH,
@@ -176,8 +177,7 @@ function createSessionEnding({
 
 	function showCurtain(isOffline: boolean): void {
 		if (state.status !== 'awaitingServerLogout') {
-			queryClient.clear();
-			router.clearCache();
+			clearSessionData();
 			window.addEventListener('online', handleRetryDue);
 		}
 		setState({ status: 'awaitingServerLogout', isOffline });
@@ -188,9 +188,8 @@ function createSessionEnding({
 		if (state.status !== 'awaitingServerLogout') {
 			setState(LEAVING_STATE);
 		}
-		queryClient.clear();
+		clearSessionData();
 		await refreshCsrfCookie();
-		router.clearCache();
 		try {
 			await router.navigate({
 				to: LOGIN_PATH,
@@ -203,6 +202,12 @@ function createSessionEnding({
 			sessionEndedMessage = undefined;
 			finishEnding();
 		}
+	}
+
+	function clearSessionData(): void {
+		queryClient.clear();
+		router.clearCache();
+		toast.dismiss();
 	}
 
 	function finishEnding(): void {

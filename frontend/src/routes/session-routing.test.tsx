@@ -1,5 +1,6 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import { delay, HttpResponse, http as mswHttp } from 'msw';
+import { toast } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { authQueries } from '@/features/auth/api/auth.queries';
@@ -683,6 +684,47 @@ describe('logout waiting for the server', () => {
 
 		expect(await screen.findByRole('alert')).toHaveTextContent(
 			'Dostęp z tej sieci jest niedozwolony.',
+		);
+	});
+});
+
+describe('session change', () => {
+	it('drops toasts of the session on logout', async () => {
+		signInAs('worker');
+		const { user } = await renderWithProviders(undefined, { route: '/hala' });
+		await screen.findByRole('heading', { name: 'Hala' });
+		act(() => {
+			toast.error('Komunikat poprzedniej sesji');
+		});
+		await screen.findByText('Komunikat poprzedniej sesji');
+
+		await user.click(screen.getByRole('button', { name: 'Wyloguj' }));
+
+		await screen.findByRole('heading', { name: 'Zaloguj się' });
+		await waitFor(() =>
+			expect(screen.queryByText('Komunikat poprzedniej sesji')).toBeNull(),
+		);
+	});
+
+	it('drops toasts and the router cache on sign-in', async () => {
+		signOutOnServer();
+		const { user, router } = await renderWithProviders(undefined, {
+			route: '/login',
+		});
+		const clearRouterCache = vi.spyOn(router, 'clearCache');
+		act(() => {
+			toast.error('Komunikat sprzed logowania');
+		});
+		await screen.findByText('Komunikat sprzed logowania');
+
+		await user.type(screen.getByLabelText('Login'), 'Jkowal');
+		await user.type(screen.getByLabelText('Hasło'), '1234');
+		await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+
+		await screen.findByRole('heading', { name: 'Hala' });
+		expect(clearRouterCache).toHaveBeenCalledTimes(1);
+		await waitFor(() =>
+			expect(screen.queryByText('Komunikat sprzed logowania')).toBeNull(),
 		);
 	});
 });
